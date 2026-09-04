@@ -14,32 +14,32 @@
      design, the way a real radar or flight display always is -- so no light
      variant is defined; every color below is painted explicitly. */
   :root{
-    --bg:#1C384A;
-    --surface:#284B62;
-    --surface-2:#345E79;
+    --bg:#132634;
+    --surface:#1C3445;
+    --surface-2:#284458;
     --ink:#F0F6F9;
-    --muted:#A2BCCD;
-    --line:#427394;
-    --line-bright:#5289AD;
-    --accent:#E3A857;
-    --accent-ink:#EFC17E;
-    --rain:#6DBEE3;
-    --violet:#A79BD9;
-    --magenta:#D98CAE;
-    --good:#6FBF8B;
-    --warn:#DCB24C;
-    --crit:#D9776B;
+    --muted:#ABC0CE;
+    --line:#385971;
+    --line-bright:#476E8A;
+    --accent:#DDA24B;
+    --accent-ink:#F0C67E;
+    --rain:#60B8E1;
+    --violet:#B3A4DF;
+    --magenta:#E198B7;
+    --good:#51C280;
+    --warn:#DBA424;
+    --crit:#EE988B;
     --shadow: 0 1px 0 rgba(255,255,255,0.029) inset, 0 1px 2px rgba(0,0,0,0.202), 0 18px 36px -20px rgba(0,0,0,0.302);
-    --glow-accent: 0 0 1px rgba(227,168,87,0.324), 0 0 16px rgba(227,168,87,0.101);
-    --glow-rain: 0 0 1px rgba(109,190,227,0.324), 0 0 16px rgba(109,190,227,0.101);
+    --glow-accent: 0 0 1px rgba(221,162,75,0.324), 0 0 16px rgba(221,162,75,0.101);
+    --glow-rain: 0 0 1px rgba(96,184,225,0.324), 0 0 16px rgba(96,184,225,0.101);
   }
 
   *{box-sizing:border-box;}
   body{
     margin:0;
     background:
-      radial-gradient(90% 60% at 82% -8%, rgba(167,155,217,0.115) 0%, transparent 55%),
-      radial-gradient(70% 50% at 8% 8%, rgba(109,190,227,0.058) 0%, transparent 60%),
+      radial-gradient(90% 60% at 82% -8%, rgba(179,164,223,0.115) 0%, transparent 55%),
+      radial-gradient(70% 50% at 8% 8%, rgba(96,184,225,0.058) 0%, transparent 60%),
       var(--bg);
     color:var(--ink);
     font-family:'Manrope', system-ui, sans-serif;
@@ -65,13 +65,13 @@
   /* hero -- radar console */
   .hero{
     border-radius:20px; padding:36px 34px 32px; margin-top:24px; position:relative; overflow:hidden;
-    background: radial-gradient(130% 170% at 14% -15%, rgba(167,155,217,0.216) 0%, rgba(28,56,74,0.677) 45%, #1C384A 78%);
+    background: radial-gradient(130% 170% at 14% -15%, rgba(179,164,223,0.216) 0%, rgba(19,38,52,0.677) 45%, #132634 78%);
     border:1px solid var(--line-bright);
     box-shadow: var(--shadow);
   }
   .hero::before{ /* rotating radar sweep */
     content:""; position:absolute; inset:-30%;
-    background: conic-gradient(from 0deg, transparent 0deg, rgba(109,190,227,0.158) 10deg, transparent 46deg, transparent 360deg);
+    background: conic-gradient(from 0deg, transparent 0deg, rgba(96,184,225,0.158) 10deg, transparent 46deg, transparent 360deg);
     animation: radarSweep 9s linear infinite;
     mix-blend-mode:screen; pointer-events:none;
   }
@@ -84,7 +84,7 @@
   .hero-top{display:flex; justify-content:space-between; gap:24px; flex-wrap:wrap; position:relative; z-index:1;}
   .hero-eyebrow{font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--accent-ink); font-weight:600;}
   .hero-temp-row{display:flex; align-items:center; gap:18px; margin-top:12px;}
-  .hero-icon{width:56px;height:56px;flex-shrink:0; filter:drop-shadow(0 0 14px rgba(227,168,87,0.18));}
+  .hero-icon{width:56px;height:56px;flex-shrink:0; filter:drop-shadow(0 0 14px rgba(221,162,75,0.18));}
   .hero-temp{font-family:'Unbounded',sans-serif; font-size:clamp(44px,6.6vw,68px); font-weight:700; line-height:1; letter-spacing:-.02em;}
   .hero-cond{font-size:14px; color:#BFC5D6; margin-top:12px; max-width:40ch; line-height:1.55;}
   .hero-stats{display:flex; gap:28px; flex-wrap:wrap; text-align:right; position:relative; z-index:1;}
@@ -98,8 +98,8 @@
   .route-card .rsub{font-size:11.5px; color:var(--muted); margin-top:4px; margin-bottom:18px; font-family:'JetBrains Mono',monospace;}
   .route-flow{display:flex; align-items:flex-start; overflow-x:auto; padding-bottom:2px;}
   .route-stop{display:flex; flex-direction:column; align-items:center; flex:1 1 0; min-width:64px; max-width:150px;}
-  .route-stop .dot{width:11px;height:11px;border-radius:50%; background:var(--good); border:2px solid var(--surface); box-shadow:0 0 0 1px var(--line), 0 0 10px rgba(111,191,139,0.36); flex-shrink:0;}
-  .route-stop .dot.rain{background:var(--rain); box-shadow:0 0 0 1px var(--line), 0 0 10px rgba(109,190,227,0.396);}
+  .route-stop .dot{width:11px;height:11px;border-radius:50%; background:var(--good); border:2px solid var(--surface); box-shadow:0 0 0 1px var(--line), 0 0 10px rgba(81,194,128,0.36); flex-shrink:0;}
+  .route-stop .dot.rain{background:var(--rain); box-shadow:0 0 0 1px var(--line), 0 0 10px rgba(96,184,225,0.396);}
   .route-stop .rname{font-size:11px; color:var(--muted); margin-top:8px; text-align:center; line-height:1.3; padding:0 2px;}
   .route-stop .rtemp{font-family:'JetBrains Mono',monospace; font-size:13.5px; font-weight:600; margin-top:3px;}
   .route-stop .rpop{font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; margin-top:4px; padding:2px 6px; border-radius:20px; background:var(--surface-2); border:1px solid var(--line);}
@@ -125,11 +125,11 @@
      "recommended" (winner) status still overrides to green below, since
      status always outranks identity when the two would otherwise compete. */
   .route-card .rlabel::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:9px;vertical-align:middle;}
-  .route-card.route-forward{border-left:3px solid var(--accent); box-shadow:var(--shadow), 0 0 16px -10px rgba(227,168,87,0.288);}
+  .route-card.route-forward{border-left:3px solid var(--accent); box-shadow:var(--shadow), 0 0 16px -10px rgba(221,162,75,0.288);}
   .route-card.route-forward .rlabel::before{background:var(--accent); box-shadow:0 0 8px var(--accent);}
-  .route-card.route-return-subhash{border-left:3px solid var(--rain); box-shadow:var(--shadow), 0 0 16px -10px rgba(109,190,227,0.288);}
+  .route-card.route-return-subhash{border-left:3px solid var(--rain); box-shadow:var(--shadow), 0 0 16px -10px rgba(96,184,225,0.288);}
   .route-card.route-return-subhash .rlabel::before{background:var(--rain); box-shadow:0 0 8px var(--rain);}
-  .route-card.route-return-ext{border-left:3px solid var(--violet); box-shadow:var(--shadow), 0 0 16px -10px rgba(167,155,217,0.288);}
+  .route-card.route-return-ext{border-left:3px solid var(--violet); box-shadow:var(--shadow), 0 0 16px -10px rgba(179,164,223,0.288);}
   .route-card.route-return-ext .rlabel::before{background:var(--violet); box-shadow:0 0 8px var(--violet);}
 
   /* best time to leave */
@@ -140,7 +140,7 @@
   .leave-slot{display:flex; flex-direction:column; align-items:center; gap:4px; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:8px 10px; min-width:56px;}
   .leave-slot .lt{font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--muted);}
   .leave-slot .lm{font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:600;}
-  .leave-slot.best{border-color:var(--good); background:color-mix(in srgb, var(--good) 16%, var(--surface-2)); box-shadow:0 0 14px -7px rgba(111,191,139,0.432);}
+  .leave-slot.best{border-color:var(--good); background:color-mix(in srgb, var(--good) 16%, var(--surface-2)); box-shadow:0 0 14px -7px rgba(81,194,128,0.432);}
   .leave-slot.best .lm{color:var(--good);}
   .leave-empty{background:var(--surface-2); border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-size:13px; color:var(--muted);}
   .subsection-label{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:10px;}
@@ -198,8 +198,8 @@
   .aqi-pill.satisfactory .dot{background:#8FCB74; box-shadow:0 0 6px #8FCB74;}
   .aqi-pill.moderate{color:var(--warn); background:color-mix(in srgb, var(--warn) 16%, transparent);}
   .aqi-pill.moderate .dot{background:var(--warn); box-shadow:0 0 6px var(--warn);}
-  .aqi-pill.poor{color:#E0946B; background:color-mix(in srgb, #E0946B 16%, transparent);}
-  .aqi-pill.poor .dot{background:#E0946B; box-shadow:0 0 6px #E0946B;}
+  .aqi-pill.poor{color:#E4A176; background:color-mix(in srgb, #E4A176 16%, transparent);}
+  .aqi-pill.poor .dot{background:#E4A176; box-shadow:0 0 6px #E4A176;}
   .aqi-pill.severe{color:var(--crit); background:color-mix(in srgb, var(--crit) 16%, transparent);}
   .aqi-pill.severe .dot{background:var(--crit); box-shadow:0 0 6px var(--crit);}
   .aqi-card .apm{display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); font-family:'JetBrains Mono',monospace;}
@@ -213,13 +213,13 @@
   .chart-card svg{width:100%; height:auto; overflow:visible;}
   .chart-tick{font-size:10px; fill:var(--muted); font-family:'JetBrains Mono',monospace;}
   @media (max-width:720px){ .chart-pair{grid-template-columns:1fr;} }
-  .reco{display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--good); border-radius:12px; padding:14px 18px; margin-bottom:14px; box-shadow:var(--shadow), 0 0 20px -10px rgba(111,191,139,0.288);}
-  .reco.caution{border-left-color:var(--warn); box-shadow:var(--shadow), 0 0 20px -10px rgba(220,178,76,0.288);}
+  .reco{display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--good); border-radius:12px; padding:14px 18px; margin-bottom:14px; box-shadow:var(--shadow), 0 0 20px -10px rgba(81,194,128,0.288);}
+  .reco.caution{border-left-color:var(--warn); box-shadow:var(--shadow), 0 0 20px -10px rgba(219,164,36,0.288);}
   .reco .reco-badge{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--good); font-weight:700; flex-shrink:0;}
   .reco.caution .reco-badge{color:var(--warn);}
   .reco .reco-text{font-size:13.5px; color:var(--ink);}
   .reco .reco-text b{font-weight:700;}
-  .route-card.winner{border-color:var(--good); box-shadow:var(--shadow), 0 0 0 1px var(--good), 0 0 24px -12px rgba(111,191,139,0.432);}
+  .route-card.winner{border-color:var(--good); box-shadow:var(--shadow), 0 0 0 1px var(--good), 0 0 24px -12px rgba(81,194,128,0.432);}
   .reco .reco-icon{width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:color-mix(in srgb, var(--good) 20%, transparent); box-shadow:0 0 16px -5px var(--good);}
   .reco .reco-icon .a-icon{width:16px; height:16px; color:var(--good);}
   .reco.caution .reco-icon{background:color-mix(in srgb, var(--warn) 22%, transparent); box-shadow:0 0 16px -5px var(--warn);}
@@ -279,7 +279,7 @@
   /* station grid */
   .stations{display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px;}
   .card{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 16px 14px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:10px;}
-  .card.commute{border-left:3px solid var(--accent); box-shadow:var(--shadow), 0 0 18px -11px rgba(227,168,87,0.36);}
+  .card.commute{border-left:3px solid var(--accent); box-shadow:var(--shadow), 0 0 18px -11px rgba(221,162,75,0.36);}
   .card .commute-tag{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-ink); font-weight:600; margin-bottom:2px; display:block;}
   .card .name{font-weight:700; font-size:14px;}
   .card .name .tag{display:block; font-size:11px; color:var(--muted); font-weight:400; margin-top:2px;}
@@ -291,7 +291,7 @@
   .rows .r b{color:var(--ink); font-family:'JetBrains Mono',monospace; font-weight:500;}
   .confidence{margin-top:2px;}
   .confidence .bar{height:5px; border-radius:3px; background:var(--surface-2); overflow:hidden;}
-  .confidence .fill{height:100%; background:linear-gradient(90deg, var(--accent), var(--accent-ink)); border-radius:3px; box-shadow:0 0 8px rgba(227,168,87,0.288);}
+  .confidence .fill{height:100%; background:linear-gradient(90deg, var(--accent), var(--accent-ink)); border-radius:3px; box-shadow:0 0 8px rgba(221,162,75,0.288);}
   .confidence .cap{font-size:10.5px; color:var(--muted); margin-top:4px; font-family:'JetBrains Mono',monospace;}
   .offline{color:var(--muted); font-style:italic; font-size:12.5px; padding:8px 0;}
 
@@ -301,13 +301,13 @@
   .day-card .d-head{display:flex; justify-content:space-between; align-items:center; gap:10px;}
   .day-card .dname{font-family:'Unbounded',sans-serif; font-weight:600; font-size:14px;}
   .day-card .dcond{display:flex; align-items:center; gap:8px;}
-  .day-card .dicon{width:30px; height:30px; flex-shrink:0; filter:drop-shadow(0 0 8px rgba(227,168,87,0.13));}
+  .day-card .dicon{width:30px; height:30px; flex-shrink:0; filter:drop-shadow(0 0 8px rgba(221,162,75,0.13));}
   .day-card .cond{font-size:12px; color:var(--muted); text-align:right;}
   .day-card .range{display:flex; align-items:baseline; gap:10px;}
   .day-card .hi{font-family:'Unbounded',sans-serif; font-size:24px; font-weight:700;}
   .day-card .lo{font-family:'Unbounded',sans-serif; font-size:16px; color:var(--muted);}
   .precip-bar{height:6px; border-radius:3px; background:var(--surface-2); overflow:hidden;}
-  .precip-bar .fill{height:100%; background:linear-gradient(90deg, var(--rain), #A9D8E3); box-shadow:0 0 8px rgba(109,190,227,0.288);}
+  .precip-bar .fill{height:100%; background:linear-gradient(90deg, var(--rain), #A9D8E3); box-shadow:0 0 8px rgba(96,184,225,0.288);}
   .day-card .precip-label{font-size:11.5px; color:var(--muted); display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace;}
 
   /* methodology */
@@ -1060,17 +1060,29 @@ async function initRadar(){
 
   const CENTER = [28.44, 77.08]; // DLF Phase 5 <-> Leena.AI Sector 48 commute corridor, midpoint
   radarMap = L.map(mapEl, {zoomControl:true, attributionControl:true}).setView(CENTER, 11);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-    attribution: '&copy; OpenStreetMap &copy; CARTO',
-    subdomains: "abcd", maxZoom: 19,
+
+  // Base map: plain OpenStreetMap tiles (free, no API key/signup needed) with a CSS
+  // dark-invert filter applied to their OWN pane only -- CARTO's dark basemap tiles now
+  // require a paid API key, and we don't want one more account to manage for a hobby
+  // dashboard. The filter lives on a dedicated pane so it never touches the radar overlay
+  // (drawn in its own pane, unfiltered) or the route markers/line (default overlay pane).
+  radarMap.createPane("baseDark");
+  radarMap.getPane("baseDark").style.zIndex = 200;
+  radarMap.getPane("baseDark").style.filter = "invert(1) hue-rotate(180deg) brightness(0.94) contrast(0.9) saturate(0.7)";
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    subdomains: "abc", maxZoom: 19, pane: "baseDark",
   }).addTo(radarMap);
+
+  radarMap.createPane("radarOverlay");
+  radarMap.getPane("radarOverlay").style.zIndex = 350;
 
   // commute corridor overlay -- approximate waypoints, just to orient the map, not a precise route
   const HOME = [28.474, 77.097], OFFICE = [28.4108, 77.0576];
   const WAYPOINTS = [HOME, [28.4645,77.0870], [28.4230,77.0620], [28.4180,77.0680], OFFICE];
-  L.polyline(WAYPOINTS, {color:"#E3A857", weight:2.5, opacity:.85, dashArray:"1,7", lineCap:"round"}).addTo(radarMap);
-  L.circleMarker(HOME, {radius:6, color:"#E3A857", fillColor:"#E3A857", fillOpacity:.9, weight:2}).addTo(radarMap).bindPopup("DLF Phase 5 (home)");
-  L.circleMarker(OFFICE, {radius:6, color:"#66B3D6", fillColor:"#66B3D6", fillOpacity:.9, weight:2}).addTo(radarMap).bindPopup("Leena.AI Office, Sector 48");
+  L.polyline(WAYPOINTS, {color:"#DDA24B", weight:2.5, opacity:.85, dashArray:"1,7", lineCap:"round"}).addTo(radarMap);
+  L.circleMarker(HOME, {radius:6, color:"#DDA24B", fillColor:"#DDA24B", fillOpacity:.9, weight:2}).addTo(radarMap).bindPopup("DLF Phase 5 (home)");
+  L.circleMarker(OFFICE, {radius:6, color:"#60B8E1", fillColor:"#60B8E1", fillOpacity:.9, weight:2}).addTo(radarMap).bindPopup("Leena.AI Office, Sector 48");
 
   try{
     const res = await fetch("https://api.rainviewer.com/public/weather-maps.json");
@@ -1083,7 +1095,7 @@ async function initRadar(){
     if(!radarFrames.length) throw new Error("no frames");
 
     const startIdx = Math.max(0, past.length - 1);
-    radarLayer = L.tileLayer(radarFrameUrl(radarFrames[startIdx]), { opacity:.72, zIndex:5 }).addTo(radarMap);
+    radarLayer = L.tileLayer(radarFrameUrl(radarFrames[startIdx]), { opacity:.72, pane: "radarOverlay" }).addTo(radarMap);
 
     const slider = document.getElementById("radar-slider");
     if(slider){
