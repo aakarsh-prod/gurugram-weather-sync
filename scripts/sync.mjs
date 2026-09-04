@@ -149,6 +149,123 @@ async function computeRoute(routeKey, departureTime) {
   };
 }
 
+// ---------- condition-streak tracking ----------
+// We already poll every 30 min, so instead of only ever showing "right now", track how
+// long each condition has held: per-station (zone level) and citywide (regional level).
+// Buckets are intentionally coarse -- the point is "how long has this been true", not a
+// precise sensor readout (that's what the station cards already show).
+function classifyRain(mmPerHr) {
+  if (mmPerHr === null || mmPerHr === undefined) return null;
+  if (mmPerHr <= 0) return "dry";
+  if (mmPerHr <= 2.5) return "light";
+  if (mmPerHr <= 10) return "moderate";
+  return "heavy";
+}
+function classifyWind(kmh) {
+  if (kmh === null || kmh === undefined) return null;
+  if (kmh < 15) return "calm";
+  if (kmh <= 30) return "breezy";
+  return "strong";
+}
+function classifyTemp(c) {
+  if (c === null || c === undefined) return null;
+  if (c < 24) return "cool";
+  if (c < 36) return "mild";
+  return "hot";
+}
+function classifyHumidity(pct) {
+  if (pct === null || pct === undefined) return null;
+  if (pct < 60) return "normal";
+  if (pct < 80) return "humid";
+  return "very-humid";
+}
+
+// Plain "how long has this bucket held" tracker -- used for wind/temp/humidity.
+function trackBucket(prevEntry, bucket, nowIso) {
+  if (bucket === null) return prevEntry || null; // no reading this run -- freeze whatever we had
+  if (prevEntry && prevEntry.state === bucket) return { state: bucket, since: prevEntry.since };
+  return { state: bucket, since: nowIso };
+}
+
+// Rain gets a richer tracker: a continuous wet/dry "spell", plus whether that spell has been
+// steady rain or on-and-off ("sporadic") -- a quick dry->wet flip soon after it last stopped
+// counts as sporadic; a long dry stretch resets that memory so old on/off patterns don't
+// haunt a brand-new rain event.
+function trackRain(prevEntry, bucket, nowIso) {
+  if (bucket === null) return prevEntry || null;
+  const prev = prevEntry || {};
+  const nowMs = new Date(nowIso).getTime();
+  const wasWet = prev.spell === "wet";
+  const isWet = bucket !== "dry";
+  const intensity = prev.intensity_state === bucket
+    ? { state: bucket, since: prev.intensity_since || nowIso }
+    : { state: bucket, since: nowIso };
+
+  let spell = prev.spell === (isWet ? "wet" : "dry") ? prev.spell : (isWet ? "wet" : "dry");
+  let spell_since = prev.spell === spell ? (prev.spell_since || nowIso) : nowIso;
+  let toggles = prev.toggles || 0;
+  const spellChanged = prev.spell && prev.spell !== spell;
+
+  if (spellChanged && isWet) {
+    // it just started raining again -- did it stop only briefly beforehand?
+    const priorDrySpanMin = prev.spell_since ? (nowMs - new Date(prev.spell_since).getTime()) / 60000 : Infinity;
+    toggles = priorDrySpanMin < 60 ? toggles + 1 : 0;
+  } else if (!isWet) {
+    // long enough dry and the on/off memory stops counting against the next rain event
+    const drySpanMin = spell_since ? (nowMs - new Date(spell_since).getTime()) / 60000 : 0;
+    if (drySpanMin > 60) toggles = 0;
+  }
+
+  return {
+    intensity_state: intensity.state,
+    intensity_since: intensity.since,
+    spell,
+    spell_since,
+    pattern: isWet ? (toggles >= 2 ? "sporadic" : "continuous") : null,
+    toggles,
+  };
+}
+
+function computeConditions(prevConditions, stations, om, nowIso) {
+  const prevStations = (prevConditions && prevConditions.stations) || {};
+  const outStations = {};
+  let cityRainSrc = null; // max mm/hr among live rain sensors, for a real ground-truth "is it raining" signal
+
+  for (const s of stations) {
+    const prevS = prevStations[s.id] || {};
+    const entry = {};
+    if (s.rain_intensity !== null && s.rain_intensity !== undefined) {
+      entry.rain = trackRain(prevS.rain, classifyRain(s.rain_intensity), nowIso);
+      cityRainSrc = Math.max(cityRainSrc ?? 0, s.rain_intensity);
+    } else if (prevS.rain) {
+      entry.rain = prevS.rain; // offline this run -- keep the streak frozen, don't erase it
+    }
+    if (s.temperature !== null && s.temperature !== undefined) {
+      entry.wind = trackBucket(prevS.wind, classifyWind(s.wind_speed), nowIso);
+      entry.temp = trackBucket(prevS.temp, classifyTemp(s.temperature), nowIso);
+      entry.humidity = trackBucket(prevS.humidity, classifyHumidity(s.humidity), nowIso);
+    } else {
+      if (prevS.wind) entry.wind = prevS.wind;
+      if (prevS.temp) entry.temp = prevS.temp;
+      if (prevS.humidity) entry.humidity = prevS.humidity;
+    }
+    outStations[s.id] = entry;
+  }
+
+  const prevCity = (prevConditions && prevConditions.city) || {};
+  // Fall back to Open-Meteo's own precip figure if every local rain gauge is offline --
+  // an approximation (regional model, not a gauge), but better than losing the streak entirely.
+  const cityRainMm = cityRainSrc ?? (om.current.precip ?? null);
+  const city = {
+    rain: trackRain(prevCity.rain, classifyRain(cityRainMm), nowIso),
+    wind: trackBucket(prevCity.wind, classifyWind(om.current.wind_speed), nowIso),
+    temp: trackBucket(prevCity.temp, classifyTemp(om.current.temp), nowIso),
+    humidity: trackBucket(prevCity.humidity, classifyHumidity(om.current.humidity), nowIso),
+  };
+
+  return { city, stations: outStations };
+}
+
 function futureSlots(slots, date) {
   const nowMs = Date.now();
   return slots.filter(t => new Date(`${date}T${t}:00+05:30`).getTime() > nowMs);
@@ -178,6 +295,7 @@ async function main() {
 
   const stations = await Promise.all(STATIONS_META.map(fetchWeatherUnion));
   const om = await fetchOpenMeteo();
+  const conditions = computeConditions(prev.conditions, stations, om, new Date().toISOString());
 
   const date = istDate();
   const weekday = istWeekdayName();
@@ -264,6 +382,7 @@ async function main() {
     weekday,
     stations,
     om,
+    conditions,
     traffic,
     departurePlanToday,
     departurePlanMorning,
