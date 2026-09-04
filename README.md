@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/31849940/README.md)
 # Gurugram Weather Station
 
 A personal commute dashboard for the DLF Phase 5 → Leena.AI (Sector 48) route in Gurugram —
@@ -18,8 +17,9 @@ GitHub Actions (cron, every 30 min)
         ├─ scripts/sync.mjs fetches:
         │    • Weather Union (11 stations) — always
         │    • Open-Meteo (regional forecast) — always
-        │    • Google Routes (traffic + "best time to leave") — weekdays,
-        │      8 AM–9 PM IST only, roughly hourly, budget-capped (see below)
+        │    • Google Routes "current traffic" — weekdays, 8 AM–9 PM IST, every 30 min
+        │    • Google Routes "best time to leave" slot projections — weekdays,
+        │      9 AM–12 PM / 2–9 PM IST, roughly hourly (budget-capped, see below)
         │
         ├─ writes the result to data.json and commits it back to this repo
         │
@@ -45,13 +45,19 @@ live data from `data.json`.
 
 Google Routes API bills per call once you're off the free tier, and `TRAFFIC_AWARE` requests
 specifically fall under the **Pro SKU**, whose free allowance is 5,000 calls/month. `sync.mjs`
-enforces three independent limits so this can never turn into a surprise bill:
+enforces several independent limits so this can never turn into a surprise bill:
 
-1. Google Routes is only called on weekdays, 8 AM–9 PM IST (no point checking traffic at 3 AM).
-2. It only runs roughly once an hour, not every 30-minute cycle.
+1. Google Routes is only called on weekdays, within commute-relevant hours — no point checking
+   traffic at 3 AM.
+2. "Current traffic" (the number shown on every route card) refreshes every 30 minutes, 8 AM–9
+   PM IST — that's the number actually worth checking that often. The "best time to leave"
+   slot projections (which recompute 9-18 future departure times per run) are throttled to
+   roughly once an hour instead, since recomputing them every 30 min added little value.
 3. A running monthly call count is written into `data.json` itself (`gmapsUsage`) and checked
-   before every batch of calls — hard-capped at 4,500/month, comfortably under the 5,000 free
-   ceiling, regardless of how many weekdays a given month has.
+   before every batch of calls — hard-capped at 4,500/month. At the current cadence, actual
+   usage should land around 3,900–4,050/month, so this cap is a safety net against a bad
+   estimate (extra manual runs, a longer month) rather than something that triggers in normal
+   operation.
 
 Weather Union and Open-Meteo are free/unlimited and refresh every 30 minutes regardless.
 
