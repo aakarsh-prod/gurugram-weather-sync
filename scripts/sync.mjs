@@ -64,17 +64,23 @@ async function fetchWeatherUnion(station) {
     const json = await res.json();
     const d = json.locality_weather_data || {};
     const hasTemp = d.temperature !== undefined && d.temperature !== null;
+    const hasRain = d.rain_accumulation !== undefined && d.rain_accumulation !== null;
+    // A station can report neither temperature nor rain (e.g. a degraded/misconfigured
+    // sensor) -- that's a real "offline" station, not a "rain gauge only" one. Getting this
+    // classification right matters: the front-end trusts "rain_only" to always carry a real
+    // rain_accumulation number, and a bad guess here previously crashed the whole render.
+    const status = hasTemp ? "ok" : hasRain ? "rain_only" : "offline";
     return {
       id: station.id, name: station.name, tag: station.tag, routes: station.routes,
       temperature: hasTemp ? d.temperature : null,
       humidity: hasTemp ? d.humidity : null,
       wind_speed: hasTemp && d.wind_speed !== undefined ? d.wind_speed * 3.6 : null,
       wind_dir: hasTemp ? toCompass(d.wind_direction) : null,
-      rain_intensity: d.rain_intensity ?? 0,
-      rain_accumulation: d.rain_accumulation ?? null,
+      rain_intensity: hasRain ? (d.rain_intensity ?? 0) : null,
+      rain_accumulation: hasRain ? d.rain_accumulation : null,
       pm10: d.aqi_pm_10 ?? null,
       pm25: d.aqi_pm_2_point_5 ?? null,
-      status: hasTemp ? "ok" : "rain_only",
+      status,
     };
   } catch (e) {
     return { id: station.id, name: station.name, tag: station.tag, routes: station.routes, status: "offline", temperature: null, humidity: null, wind_speed: null, wind_dir: null, rain_intensity: null, rain_accumulation: null, pm10: null, pm25: null };
@@ -144,6 +150,20 @@ function futureSlots(slots, date) {
   return slots.filter(t => new Date(`${date}T${t}:00+05:30`).getTime() > nowMs);
 }
 
+// The workflow itself runs every 30 min (weather needs that cadence), but Google Routes
+// billing is a per-call cost -- gate the routes-calling steps down to roughly once an hour.
+// mm<10 (rather than mm===0) tolerates GitHub Actions' scheduling jitter (scheduled runs can
+// fire a few minutes late) without silently skipping the intended hourly slot.
+function isHourlySlot() {
+  return istHM().mm < 10;
+}
+
+// Google Routes with routingPreference:"TRAFFIC_AWARE" bills under the Pro SKU, whose free
+// tier is 5,000 calls/month (not the 10,000 Essentials gets) -- this is a hard circuit
+// breaker so a bad estimate (more weekdays than expected, extra manual runs, etc.) can
+// NEVER turn into a surprise bill, on top of the office-hours + hourly-cadence savings above.
+const GMAPS_MONTHLY_BUDGET = 4500; // stay comfortably under the 5,000 free-tier ceiling
+
 async function main() {
   let prev = {};
   try {
@@ -158,54 +178,77 @@ async function main() {
   const date = istDate();
   const weekday = istWeekdayName();
   const weekdayFlag = isWeekday();
+  const curMonth = date.slice(0, 7); // YYYY-MM, IST calendar
 
   let traffic = prev.traffic || null;
   let departurePlanToday = prev.departurePlanToday || null;
   let departurePlanMorning = prev.departurePlanMorning || null;
 
-  if (weekdayFlag && GOOGLE_ROUTES_KEY) {
-    // 6a: current traffic, every weekday run
-    const entries = await Promise.all(Object.keys(ROUTE_DEFS).map(async key => {
-      const r = await computeRoute(key, null);
-      return r ? [key, { ...r, updated_at: nowIst().toISOString().replace("Z", "+05:30").slice(0, 19) + "+05:30" }] : null;
-    }));
-    const freshTraffic = Object.fromEntries(entries.filter(Boolean));
-    if (Object.keys(freshTraffic).length) traffic = { ...(traffic || {}), ...freshTraffic };
+  const prevUsage = prev.gmapsUsage || {};
+  let gmapsCalls = prevUsage.month === curMonth ? (prevUsage.calls || 0) : 0;
+  let gmapsSkipped = false;
+  function budgetAllows(n) {
+    if (gmapsCalls + n > GMAPS_MONTHLY_BUDGET) { gmapsSkipped = true; return false; }
+    return true;
+  }
+  function recordCalls(n) { gmapsCalls += n; }
+
+  // Only spend Google Routes calls during real commute-relevant hours (8 AM - 9 PM IST) and
+  // roughly once an hour, not every 30-min cycle around the clock -- overnight traffic reads
+  // are worthless and were previously the single biggest driver of API usage.
+  if (weekdayFlag && GOOGLE_ROUTES_KEY && isHourlySlot()) {
+    // 6a: current traffic for all 3 routes, office hours only
+    if (inWindow(8, 21) && budgetAllows(Object.keys(ROUTE_DEFS).length)) {
+      const entries = await Promise.all(Object.keys(ROUTE_DEFS).map(async key => {
+        const r = await computeRoute(key, null);
+        return r ? [key, { ...r, updated_at: nowIst().toISOString().replace("Z", "+05:30").slice(0, 19) + "+05:30" }] : null;
+      }));
+      recordCalls(Object.keys(ROUTE_DEFS).length);
+      const freshTraffic = Object.fromEntries(entries.filter(Boolean));
+      if (Object.keys(freshTraffic).length) traffic = { ...(traffic || {}), ...freshTraffic };
+    }
 
     // 6b: evening best-time-to-leave, 14:00-21:00 IST, return routes
     if (inWindow(14, 21)) {
       const slots = futureSlots(["16:30","17:00","17:30","18:00","18:30","19:00","19:30","20:00","20:30"], date);
-      const routes = {};
-      for (const key of ["return-subhash", "return-ext"]) {
-        const results = [];
-        for (const t of slots) {
-          const r = await computeRoute(key, `${date}T${t}:00+05:30`);
-          if (r) results.push({ time: t, duration_s: r.duration_s });
+      const routeKeys = ["return-subhash", "return-ext"];
+      if (budgetAllows(slots.length * routeKeys.length)) {
+        const routes = {};
+        for (const key of routeKeys) {
+          const results = [];
+          for (const t of slots) {
+            const r = await computeRoute(key, `${date}T${t}:00+05:30`);
+            if (r) results.push({ time: t, duration_s: r.duration_s });
+          }
+          routes[key] = results;
         }
-        routes[key] = results;
-      }
-      let best = null;
-      for (const [key, arr] of Object.entries(routes)) {
-        for (const s of arr) {
-          if (!best || s.duration_s < best.duration_s) best = { routeKey: key, time: s.time, duration_s: s.duration_s };
+        recordCalls(slots.length * routeKeys.length);
+        let best = null;
+        for (const [key, arr] of Object.entries(routes)) {
+          for (const s of arr) {
+            if (!best || s.duration_s < best.duration_s) best = { routeKey: key, time: s.time, duration_s: s.duration_s };
+          }
         }
+        departurePlanToday = { date, weekday, routes, best, computed_at: new Date().toISOString() };
       }
-      departurePlanToday = { date, weekday, routes, best, computed_at: new Date().toISOString() };
     }
 
     // 6c: morning best-time-to-leave, 09:00-12:00 IST, forward route only
     if (inWindow(9, 12)) {
       const slots = futureSlots(["09:00","09:30","10:00","10:30","11:00","11:30","12:00"], date);
-      const results = [];
-      for (const t of slots) {
-        const r = await computeRoute("forward", `${date}T${t}:00+05:30`);
-        if (r) results.push({ time: t, duration_s: r.duration_s });
+      if (budgetAllows(slots.length)) {
+        const results = [];
+        for (const t of slots) {
+          const r = await computeRoute("forward", `${date}T${t}:00+05:30`);
+          if (r) results.push({ time: t, duration_s: r.duration_s });
+        }
+        recordCalls(slots.length);
+        let best = null;
+        for (const s of results) {
+          if (!best || s.duration_s < best.duration_s) best = { routeKey: "forward", time: s.time, duration_s: s.duration_s };
+        }
+        departurePlanMorning = { date, weekday, routes: { forward: results }, best, computed_at: new Date().toISOString() };
       }
-      let best = null;
-      for (const s of results) {
-        if (!best || s.duration_s < best.duration_s) best = { routeKey: "forward", time: s.time, duration_s: s.duration_s };
-      }
-      departurePlanMorning = { date, weekday, routes: { forward: results }, best, computed_at: new Date().toISOString() };
     }
   }
 
@@ -218,10 +261,11 @@ async function main() {
     traffic,
     departurePlanToday,
     departurePlanMorning,
+    gmapsUsage: { month: curMonth, calls: gmapsCalls, budget: GMAPS_MONTHLY_BUDGET },
   };
 
   await fs.writeFile(DATA_PATH, JSON.stringify(out, null, 2) + "\n");
-  console.log(`Synced ${stations.length} stations, weekday=${weekday}, traffic=${!!traffic}, eveningPlan=${!!(departurePlanToday && departurePlanToday.date === date)}, morningPlan=${!!(departurePlanMorning && departurePlanMorning.date === date)}`);
+  console.log(`Synced ${stations.length} stations, weekday=${weekday}, traffic=${!!traffic}, eveningPlan=${!!(departurePlanToday && departurePlanToday.date === date)}, morningPlan=${!!(departurePlanMorning && departurePlanMorning.date === date)}, gmapsCalls=${gmapsCalls}/${GMAPS_MONTHLY_BUDGET}${gmapsSkipped ? " (budget-limited this run)" : ""}`);
 }
 
 main().catch(e => {
