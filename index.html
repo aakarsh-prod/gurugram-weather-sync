@@ -585,11 +585,20 @@ function projectStation(station, om, lw, h){
 }
 
 function render(stations, om, traffic){
+  // Defensive normalization: Open-Meteo has (rarely) returned a null field for a given
+  // hour/day. Fall back to 0 rather than let one bad field crash the whole render --
+  // the WeatherUnion feed already taught us not to trust every upstream field is populated.
+  om = {
+    ...om,
+    current: { ...om.current, temp: om.current.temp ?? 0, humidity: om.current.humidity ?? 0, wind_speed: om.current.wind_speed ?? 0 },
+    daily: (om.daily||[]).map(d => ({ ...d, tmax: d.tmax ?? 0, tmin: d.tmin ?? 0, precip_sum: d.precip_sum ?? 0, pop_max: d.pop_max ?? 0 })),
+  };
+
   const lw = localWeight(HISTORY_START);
   const liveStations = stations.filter(s=>s.temperature!==null);
 
   // headline
-  const avgTemp = liveStations.reduce((a,s)=>a+s.temperature,0)/liveStations.length;
+  const avgTemp = liveStations.length ? liveStations.reduce((a,s)=>a+s.temperature,0)/liveStations.length : om.current.temp;
   const anyRain = stations.some(s=>(s.rain_intensity||0) > 0);
   const totalRainNow = stations.reduce((a,s)=>a+(s.rain_intensity||0),0);
   const wettest = stations.slice().sort((a,b)=>(b.rain_accumulation||0)-(a.rain_accumulation||0))[0];
@@ -606,7 +615,7 @@ function render(stations, om, traffic){
       <div class="hero-stats">
         <div class="hero-stat"><div class="k">Humidity</div><div class="v">${om.current.humidity}%</div></div>
         <div class="hero-stat"><div class="k">Wind</div><div class="v">${om.current.wind_speed.toFixed(1)} km/h</div></div>
-        <div class="hero-stat"><div class="k">Rain today (peak)</div><div class="v">${wettest.rain_accumulation.toFixed(1)} mm</div></div>
+        <div class="hero-stat"><div class="k">Rain today (peak)</div><div class="v">${(wettest.rain_accumulation??0).toFixed(1)} mm</div></div>
       </div>
     </div>
   `;
@@ -671,7 +680,7 @@ function render(stations, om, traffic){
   document.getElementById("headline").innerHTML = `
     <div class="cell"><div class="label">Avg. sector temp</div><div class="value">${avgTemp.toFixed(1)}&deg;</div><div class="sub">vs ${om.current.temp.toFixed(1)}&deg; regional model</div></div>
     <div class="cell"><div class="label">Rain right now</div><div class="value">${anyRain? "Falling":"None"}</div><div class="sub">${totalRainNow.toFixed(1)} mm/min combined</div></div>
-    <div class="cell"><div class="label">Wettest today</div><div class="value">${wettest.rain_accumulation.toFixed(1)} mm</div><div class="sub">${wettest.name.split(",")[0]}</div></div>
+    <div class="cell"><div class="label">Wettest today</div><div class="value">${(wettest.rain_accumulation??0).toFixed(1)} mm</div><div class="sub">${wettest.name.split(",")[0]}</div></div>
     <div class="cell"><div class="label">Local model weight</div><div class="value">${Math.round(lw*100)}%</div><div class="sub">toward ${TARGET_DAYS}-day maturity</div></div>
   `;
 
@@ -687,11 +696,13 @@ function render(stations, om, traffic){
     }
     const bias = s.temperature!==null ? s.temperature - om.current.temp : null;
     const confPct = Math.round(lw*100);
-    if(s.status==="rain_only"){
+    if(s.status==="rain_only" || s.status==="offline"){
+      const intTxt = s.rain_intensity!==null && s.rain_intensity!==undefined ? s.rain_intensity : "&ndash;";
+      const accTxt = s.rain_accumulation!==null && s.rain_accumulation!==undefined ? s.rain_accumulation.toFixed(1)+" mm" : "no data";
       return `<div class="${cls}">${tagBlock}
         <div class="rows">
-          <div class="r">Rain intensity <b>${s.rain_intensity} mm/min</b></div>
-          <div class="r">Rain today <b>${s.rain_accumulation.toFixed(1)} mm</b></div>
+          <div class="r">Rain intensity <b>${intTxt} mm/min</b></div>
+          <div class="r">Rain today <b>${accTxt}</b></div>
         </div>
       </div>`;
     }
