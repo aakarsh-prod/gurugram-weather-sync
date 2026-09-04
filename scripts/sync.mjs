@@ -193,11 +193,13 @@ async function main() {
   }
   function recordCalls(n) { gmapsCalls += n; }
 
-  // Only spend Google Routes calls during real commute-relevant hours (8 AM - 9 PM IST) and
-  // roughly once an hour, not every 30-min cycle around the clock -- overnight traffic reads
-  // are worthless and were previously the single biggest driver of API usage.
-  if (weekdayFlag && GOOGLE_ROUTES_KEY && isHourlySlot()) {
-    // 6a: current traffic for all 3 routes, office hours only
+  // Only spend Google Routes calls during real commute-relevant hours (8 AM - 9 PM IST).
+  // 6a (the "current traffic" number shown on every route card) stays at the workflow's full
+  // 30-min cadence, since that's the number people actually look at. 6b/6c (the multi-slot
+  // "best time to leave" projections) are gated to roughly once an hour instead -- recomputing
+  // 9-18 future slots every 30 min was the expensive part and added little value over hourly.
+  if (weekdayFlag && GOOGLE_ROUTES_KEY) {
+    // 6a: current traffic for all 3 routes, office hours only, every run (every 30 min)
     if (inWindow(8, 21) && budgetAllows(Object.keys(ROUTE_DEFS).length)) {
       const entries = await Promise.all(Object.keys(ROUTE_DEFS).map(async key => {
         const r = await computeRoute(key, null);
@@ -208,8 +210,8 @@ async function main() {
       if (Object.keys(freshTraffic).length) traffic = { ...(traffic || {}), ...freshTraffic };
     }
 
-    // 6b: evening best-time-to-leave, 14:00-21:00 IST, return routes
-    if (inWindow(14, 21)) {
+    // 6b: evening best-time-to-leave, 14:00-21:00 IST, return routes, roughly hourly
+    if (inWindow(14, 21) && isHourlySlot()) {
       const slots = futureSlots(["16:30","17:00","17:30","18:00","18:30","19:00","19:30","20:00","20:30"], date);
       const routeKeys = ["return-subhash", "return-ext"];
       if (budgetAllows(slots.length * routeKeys.length)) {
@@ -233,8 +235,8 @@ async function main() {
       }
     }
 
-    // 6c: morning best-time-to-leave, 09:00-12:00 IST, forward route only
-    if (inWindow(9, 12)) {
+    // 6c: morning best-time-to-leave, 09:00-12:00 IST, forward route only, roughly hourly
+    if (inWindow(9, 12) && isHourlySlot()) {
       const slots = futureSlots(["09:00","09:30","10:00","10:30","11:00","11:30","12:00"], date);
       if (budgetAllows(slots.length)) {
         const results = [];
