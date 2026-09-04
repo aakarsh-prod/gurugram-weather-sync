@@ -21,6 +21,10 @@ GitHub Actions (cron, every 30 min)
         │    • Google Routes "best time to leave" slot projections — weekdays,
         │      9 AM–12 PM / 2–9 PM IST, roughly hourly (budget-capped, see below)
         │
+        ├─ also diffs each new reading against the previous run to track how long
+        │   the current rain/wind/heat/humidity state has held (see "Ongoing
+        │   conditions" below) — no extra API calls, just memory of its own past runs
+        │
         ├─ writes the result to data.json and commits it back to this repo
         │
         └─ GitHub Pages serves index.html, which fetches data.json on load
@@ -30,6 +34,35 @@ GitHub Actions (cron, every 30 min)
 `index.html` is a fully static page — no build step, no framework. It ships with a small
 baked-in snapshot so it never shows a blank page, then immediately overwrites that with
 live data from `data.json`.
+
+## Ongoing conditions (streak tracking)
+
+Since `sync.mjs` already polls every 30 minutes, it also keeps a small memory of its own
+past runs (carried inside `data.json` itself, under `conditions`) to answer "how long has
+this been true" rather than just "what's true right now":
+
+- **Rain** gets a richer tracker than the rest: a continuous wet/dry "spell", how long it's
+  held, and whether that spell has been steady or on-and-off ("sporadic" — rain that stops
+  and restarts within an hour counts as one on-and-off event; a proper dry spell over an
+  hour resets that memory so it doesn't tag a brand-new storm as sporadic).
+- **Wind, heat, and humidity** each get a simpler "how long has this bucket held" streak
+  (calm/breezy/strong, cool/mild/hot, normal/humid/very-humid).
+- Tracked at both **zone level** (each of the 11 stations) and **city level** (the wettest
+  live rain gauge for rain; Open-Meteo's regional reading for wind/heat/humidity).
+- Only non-baseline states ever show up on the dashboard — calm, mild, and normal humidity
+  never earn a callout. A brief sensor outage freezes a station's streak rather than
+  resetting it, so a 30-minute gap in readings doesn't wipe out a 3-hour streak.
+
+## Live radar
+
+A radar map (tiles from [RainViewer](https://www.rainviewer.com)'s free public API, on a
+dark CARTO basemap via [Leaflet](https://leafletjs.com)) sits alongside a "how to use it"
+panel further down the page. It animates the last ~2 hours of precipitation plus a short
+nowcast, centered on the DLF Phase 5 ↔ Leena.AI corridor. This is entirely independent of
+`sync.mjs` — the visitor's own browser pulls the tiles directly, so it never touches the
+Google Maps budget or this site's own 30-minute refresh cycle. If RainViewer or the tile
+CDN is unreachable, the section degrades to a link to RainViewer's own live map instead of
+showing a broken map.
 
 ## Files
 
