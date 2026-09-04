@@ -91,7 +91,11 @@ async function fetchOpenMeteo() {
   const url = "https://api.open-meteo.com/v1/forecast?latitude=28.4595&longitude=77.0266&current=temperature_2m,relative_humidity_2m,precipitation,pressure_msl,wind_speed_10m,wind_direction_10m,weather_code&hourly=temperature_2m,precipitation_probability,precipitation,relative_humidity_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max&timezone=Asia%2FKolkata&forecast_days=3";
   const res = await fetch(url);
   const j = await res.json();
-  const nowIdx = j.hourly.time.findIndex(t => t.slice(11, 16) === j.current.time.slice(11, 16));
+  // Match on the HOUR only (11,13), not HH:MM -- current.time carries real minutes
+  // (e.g. "02:15") while every hourly slot is on the hour ("02:00"), so an exact-minute
+  // match almost never hits and was silently falling back to index 0 (midnight) instead
+  // of the actual current hour.
+  const nowIdx = j.hourly.time.findIndex(t => t.slice(11, 13) === j.current.time.slice(11, 13));
   const startIdx = nowIdx >= 0 ? nowIdx : 0;
   const hourly = [];
   for (let i = startIdx; i < Math.min(startIdx + 7, j.hourly.time.length); i++) {
