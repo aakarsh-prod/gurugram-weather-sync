@@ -1061,17 +1061,21 @@ async function initRadar(){
   const CENTER = [28.44, 77.08]; // DLF Phase 5 <-> Leena.AI Sector 48 commute corridor, midpoint
   radarMap = L.map(mapEl, {zoomControl:true, attributionControl:true}).setView(CENTER, 11);
 
-  // Base map: plain OpenStreetMap tiles (free, no API key/signup needed) with a CSS
-  // dark-invert filter applied to their OWN pane only -- CARTO's dark basemap tiles now
-  // require a paid API key, and we don't want one more account to manage for a hobby
-  // dashboard. The filter lives on a dedicated pane so it never touches the radar overlay
-  // (drawn in its own pane, unfiltered) or the route markers/line (default overlay pane).
-  radarMap.createPane("baseDark");
-  radarMap.getPane("baseDark").style.zIndex = 200;
-  radarMap.getPane("baseDark").style.filter = "invert(1) hue-rotate(180deg) brightness(0.94) contrast(0.9) saturate(0.7)";
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    subdomains: "abc", maxZoom: 19, pane: "baseDark",
+  // Base map: Esri's free "World Dark Gray" basemap -- dark by design (no CSS invert hack
+  // needed), no API key or signup, and served from Esri's own CDN rather than the plain
+  // OpenStreetMap tile servers (whose usage policy discourages embedding in a public site
+  // like this one, key-free or not). Note the tile URL order here is z/y/x, not the usual
+  // z/x/y -- an Esri REST tile-service quirk, easy to get backwards.
+  radarMap.createPane("base");
+  radarMap.getPane("base").style.zIndex = 200;
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+    attribution: '&copy; <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>',
+    maxZoom: 16, pane: "base",
+  }).addTo(radarMap);
+  radarMap.createPane("baseLabels");
+  radarMap.getPane("baseLabels").style.zIndex = 250;
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}", {
+    maxZoom: 16, pane: "baseLabels",
   }).addTo(radarMap);
 
   radarMap.createPane("radarOverlay");
@@ -1089,8 +1093,11 @@ async function initRadar(){
     if(!res.ok) throw new Error("bad status");
     const j = await res.json();
     radarHost = j.host;
-    const past = (j.radar && j.radar.past || []).slice(-8).map(f=>({...f, forecast:false}));
-    const nowcast = (j.radar && j.radar.nowcast || []).slice(0,2).map(f=>({...f, forecast:true}));
+    // RainViewer typically hands back ~13 past frames (its full available history, roughly
+    // the last 2 hours at 10-min steps) -- use all of it rather than an arbitrary short slice,
+    // plus whatever short nowcast it offers (varies, sometimes none).
+    const past = (j.radar && j.radar.past || []).slice(-16).map(f=>({...f, forecast:false}));
+    const nowcast = (j.radar && j.radar.nowcast || []).slice(0,6).map(f=>({...f, forecast:true}));
     radarFrames = [...past, ...nowcast];
     if(!radarFrames.length) throw new Error("no frames");
 
