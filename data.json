@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-05T12:09:08.997Z",
+  "generatedAt": "2026-09-05T12:40:02.744Z",
   "historyStart": "2026-09-04T14:22:11.943638Z",
   "weekday": "Saturday",
   "stations": [
@@ -12,14 +12,14 @@
         "return-subhash",
         "return-ext"
       ],
-      "temperature": 26.35,
-      "humidity": 85.27,
-      "wind_speed": 2.52,
-      "wind_dir": "NE",
+      "temperature": 25.97,
+      "humidity": 88.01,
+      "wind_speed": 0,
+      "wind_dir": "SSE",
       "rain_intensity": 0,
-      "rain_accumulation": 31.8,
-      "pm10": 0,
-      "pm25": 3,
+      "rain_accumulation": 32.2,
+      "pm10": 2,
+      "pm25": 0,
       "status": "ok"
     },
     {
@@ -30,10 +30,10 @@
         "forward",
         "return-subhash"
       ],
-      "temperature": 27.24,
-      "humidity": 84.34,
-      "wind_speed": 2.088,
-      "wind_dir": "WSW",
+      "temperature": 27.01,
+      "humidity": 86.01,
+      "wind_speed": 2.052,
+      "wind_dir": "W",
       "rain_intensity": 0,
       "rain_accumulation": 24.8,
       "pm10": null,
@@ -49,12 +49,12 @@
         "return-subhash",
         "return-ext"
       ],
-      "temperature": 27.49,
-      "humidity": 85.88,
-      "wind_speed": 1.1880000000000002,
-      "wind_dir": "WNW",
+      "temperature": 26.96,
+      "humidity": 86.17,
+      "wind_speed": 1.836,
+      "wind_dir": "SW",
       "rain_intensity": 0,
-      "rain_accumulation": 26.4,
+      "rain_accumulation": 26.6,
       "pm10": null,
       "pm25": null,
       "status": "ok"
@@ -67,10 +67,10 @@
         "forward",
         "return-ext"
       ],
-      "temperature": 26.72,
-      "humidity": 92.36,
-      "wind_speed": 0.864,
-      "wind_dir": "ESE",
+      "temperature": 25.84,
+      "humidity": 92.12,
+      "wind_speed": 2.8080000000000003,
+      "wind_dir": "E",
       "rain_intensity": 0,
       "rain_accumulation": 16.8,
       "pm10": null,
@@ -84,12 +84,12 @@
       "routes": [
         "return-ext"
       ],
-      "temperature": 26.83,
-      "humidity": 86.09,
-      "wind_speed": 5.184,
-      "wind_dir": "NNW",
+      "temperature": 26.57,
+      "humidity": 85.65,
+      "wind_speed": 3.2760000000000002,
+      "wind_dir": "NW",
       "rain_intensity": 0,
-      "rain_accumulation": 35.2,
+      "rain_accumulation": 35.4,
       "pm10": null,
       "pm25": null,
       "status": "ok"
@@ -102,12 +102,12 @@
         "forward",
         "return-ext"
       ],
-      "temperature": 27.49,
-      "humidity": 85.88,
-      "wind_speed": 1.1880000000000002,
-      "wind_dir": "WNW",
+      "temperature": 26.96,
+      "humidity": 86.17,
+      "wind_speed": 1.836,
+      "wind_dir": "SW",
       "rain_intensity": 0,
-      "rain_accumulation": 26.4,
+      "rain_accumulation": 26.6,
       "pm10": null,
       "pm25": null,
       "status": "ok"
@@ -117,9 +117,9 @@
       "name": "Sector 15, Gurugram",
       "tag": "Part II",
       "routes": [],
-      "temperature": 27.62,
-      "humidity": 90.93,
-      "wind_speed": 5.076,
+      "temperature": 27.38,
+      "humidity": 91.7,
+      "wind_speed": 1.9800000000000002,
       "wind_dir": "SSW",
       "rain_intensity": 0,
       "rain_accumulation": 22.2,
@@ -132,10 +132,10 @@
       "name": "Sector 52, Gurugram",
       "tag": "Nirvana Country",
       "routes": [],
-      "temperature": 26.76,
-      "humidity": 93.28,
-      "wind_speed": 5.004,
-      "wind_dir": "ENE",
+      "temperature": 26.5,
+      "humidity": 91.7,
+      "wind_speed": 3.24,
+      "wind_dir": "E",
       "rain_intensity": 0,
       "rain_accumulation": 23,
       "pm10": null,
@@ -147,10 +147,10 @@
       "name": "Sector 10, Gurugram",
       "tag": "Old Gurugram",
       "routes": [],
-      "temperature": 27.92,
-      "humidity": 85.78,
-      "wind_speed": 0,
-      "wind_dir": "WNW",
+      "temperature": 27.5,
+      "humidity": 85.85,
+      "wind_speed": 0.648,
+      "wind_dir": "NNW",
       "rain_intensity": 0,
       "rain_accumulation": 32,
       "pm10": null,
@@ -192,31 +192,25 @@
     "lat": 28.4595,
     "lon": 77.0266,
     "current": {
-      "time": "2026-09-05T17:30",
-      "temp": 26.8,
-      "humidity": 93,
-      "precip": 0.1,
-      "pressure": 1004.5,
-      "wind_speed": 6.6,
-      "wind_dir": 47,
-      "code": 51
+      "time": "2026-09-05T18:00",
+      "temp": 26.7,
+      "humidity": 91,
+      "precip": 0,
+      "pressure": 1005.4,
+      "wind_speed": 6.4,
+      "wind_dir": 18,
+      "code": 3
     },
     "hourly": [
       {
-        "t": "17:00",
-        "temp": 26.8,
-        "pop": 67,
-        "code": 51
-      },
-      {
         "t": "18:00",
-        "temp": 26.5,
+        "temp": 26.6,
         "pop": 52,
         "code": 3
       },
       {
         "t": "19:00",
-        "temp": 26.3,
+        "temp": 26.4,
         "pop": 35,
         "code": 3
       },
@@ -228,21 +222,27 @@
       },
       {
         "t": "21:00",
-        "temp": 25.8,
+        "temp": 25.7,
         "pop": 15,
         "code": 3
       },
       {
         "t": "22:00",
-        "temp": 25.7,
+        "temp": 25.6,
         "pop": 12,
         "code": 3
       },
       {
         "t": "23:00",
-        "temp": 25.6,
+        "temp": 25.5,
         "pop": 10,
-        "code": 2
+        "code": 3
+      },
+      {
+        "t": "00:00",
+        "temp": 25.4,
+        "pop": 10,
+        "code": 3
       }
     ],
     "daily": [
@@ -250,27 +250,27 @@
         "date": "2026-09-05",
         "label": "Today",
         "code": 96,
-        "tmax": 28.8,
+        "tmax": 28,
         "tmin": 25.2,
-        "precip_sum": 34.4,
+        "precip_sum": 25,
         "pop_max": 100
       },
       {
         "date": "2026-09-06",
         "label": "Tomorrow",
-        "code": 53,
-        "tmax": 30.9,
-        "tmin": 25.2,
-        "precip_sum": 2.8,
+        "code": 95,
+        "tmax": 27.7,
+        "tmin": 24.7,
+        "precip_sum": 8.2,
         "pop_max": 73
       },
       {
         "date": "2026-09-07",
         "label": "Mon",
         "code": 51,
-        "tmax": 33.4,
-        "tmin": 23.7,
-        "precip_sum": 0.2,
+        "tmax": 32.6,
+        "tmin": 23.5,
+        "precip_sum": 0.1,
         "pop_max": 12
       }
     ]
@@ -535,7 +535,7 @@
     "budget": 4500
   },
   "tomorrowRadar": {
-    "time": "2026-09-05T12:09:08.254Z",
+    "time": "2026-09-05T12:40:01.514Z",
     "zoom": 6,
     "tiles": [
       {
@@ -549,7 +549,7 @@
     ],
     "fields": {
       "precipitationIntensity": true,
-      "cloudCover": false
+      "cloudCover": true
     }
   }
 }
