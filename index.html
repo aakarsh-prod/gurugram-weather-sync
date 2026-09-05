@@ -254,6 +254,13 @@
   .radar-other-body a{color:var(--ink); font-weight:600; font-size:13px; text-decoration:none;}
   .radar-other-body a:hover{color:var(--accent-ink);}
   .radar-other-body span{font-size:12px; color:var(--muted); line-height:1.5;}
+  .radar-tomorrow{border-top:1px solid var(--line); padding-top:13px; display:flex; flex-direction:column; gap:10px;}
+  .radar-tomorrow-hint{font-size:12px; color:var(--muted); line-height:1.5; margin:0;}
+  .radar-tomorrow-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .radar-tomorrow-tile{display:flex; flex-direction:column; gap:6px;}
+  .radar-tomorrow-tile img{width:100%; aspect-ratio:1; border-radius:8px; border:1px solid var(--line); object-fit:cover; background:var(--surface-2);}
+  .radar-tomorrow-tile .tt-label{font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted); display:flex; justify-content:space-between; gap:6px;}
+  .radar-tomorrow-tile .tt-label b{color:var(--ink); font-weight:600;}
 
   /* headline strip */
   .headline{
@@ -428,6 +435,21 @@
           <li>Tiles load straight from RainViewer in your browser &mdash; independent of this site's own 30&#8209;min data refresh and the Google Maps budget.</li>
         </ul>
         <a class="radar-source" href="https://www.rainviewer.com/india/weather-radar-map-live-gurugram.html" target="_blank" rel="noopener">Open full RainViewer map &#8599;</a>
+
+        <div class="radar-tomorrow" id="tomorrow-radar-block" hidden>
+          <div class="subsection-label">Close-up view (ours, every 30 min)</div>
+          <p class="radar-tomorrow-hint">Tomorrow.io's satellite-blended estimate for just the DLF&nbsp;Phase&nbsp;5&ndash;Leena.AI corridor &mdash; fetched by our own sync run, so it's a static snapshot rather than an animated layer, but it isn't capped at RainViewer's coarse India zoom.</p>
+          <div class="radar-tomorrow-row">
+            <div class="radar-tomorrow-tile">
+              <img id="tt-precip" alt="Tomorrow.io precipitation intensity over the commute corridor">
+              <div class="tt-label"><b>Precipitation</b><span id="tt-time-precip"></span></div>
+            </div>
+            <div class="radar-tomorrow-tile">
+              <img id="tt-cloud" alt="Tomorrow.io cloud cover over the commute corridor">
+              <div class="tt-label"><b>Cloud cover</b><span id="tt-time-cloud"></span></div>
+            </div>
+          </div>
+        </div>
 
         <div class="radar-other">
           <div class="subsection-label">Other sources worth checking</div>
@@ -737,6 +759,43 @@ function renderConditions(conditions, stations){
   zoneEl.innerHTML = zonePills.length
     ? zonePills.map(p=>`<span class="zone-pill tone-${p.tone}"><span class="zdot"></span>${p.text}</span>`).join("")
     : `<div class="conditions-empty">No single zone standing out from the rest right now.</div>`;
+}
+
+// Our own Tomorrow.io tile snapshots (see sync.mjs) -- only appears once data.json actually
+// carries a tomorrowRadar entry, which only happens once TOMORROW_API_KEY is configured as a
+// repo secret and a sync run has fetched successfully at least once. Absent that, the whole
+// block stays hidden rather than showing broken images.
+function renderTomorrowRadar(tomorrowRadar){
+  const block = document.getElementById("tomorrow-radar-block");
+  if(!block) return;
+  if(!tomorrowRadar || !tomorrowRadar.fields || !(tomorrowRadar.fields.precipitationIntensity || tomorrowRadar.fields.cloudCover)){
+    block.hidden = true;
+    return;
+  }
+  block.hidden = false;
+  const stamp = new Date(tomorrowRadar.time);
+  const timeText = isNaN(stamp) ? "" : stamp.toLocaleTimeString("en-IN", {hour:"2-digit", minute:"2-digit", hour12:true, timeZone:"Asia/Kolkata"});
+  const cacheBust = "?_=" + encodeURIComponent(tomorrowRadar.time || Date.now());
+
+  const precipImg = document.getElementById("tt-precip");
+  const precipTile = precipImg ? precipImg.closest(".radar-tomorrow-tile") : null;
+  if(tomorrowRadar.fields.precipitationIntensity){
+    if(precipTile) precipTile.style.display = "";
+    if(precipImg) precipImg.src = "./tomorrow-precipitationIntensity.png" + cacheBust;
+    const t = document.getElementById("tt-time-precip"); if(t) t.textContent = timeText;
+  } else if(precipTile){
+    precipTile.style.display = "none";
+  }
+
+  const cloudImg = document.getElementById("tt-cloud");
+  const cloudTile = cloudImg ? cloudImg.closest(".radar-tomorrow-tile") : null;
+  if(tomorrowRadar.fields.cloudCover){
+    if(cloudTile) cloudTile.style.display = "";
+    if(cloudImg) cloudImg.src = "./tomorrow-cloudCover.png" + cacheBust;
+    const t = document.getElementById("tt-time-cloud"); if(t) t.textContent = timeText;
+  } else if(cloudTile){
+    cloudTile.style.display = "none";
+  }
 }
 
 // SVG path for a bar whose top two corners are rounded, bottom square (rests on baseline).
@@ -1120,6 +1179,38 @@ async function initRadar(){
   L.circleMarker(HOME, {radius:6, color:"#DDA24B", fillColor:"#DDA24B", fillOpacity:.9, weight:2}).addTo(radarMap).bindPopup("DLF Phase 5 (home)");
   L.circleMarker(OFFICE, {radius:6, color:"#60B8E1", fillColor:"#60B8E1", fillOpacity:.9, weight:2}).addTo(radarMap).bindPopup("Leena.AI Office, Sector 48");
 
+  const ok = await refreshRadarFrames({firstLoad:true});
+  if(!ok){
+    if(timeEl) timeEl.textContent = "Radar unavailable right now";
+    const slider = document.getElementById("radar-slider");
+    const btn = document.getElementById("radar-play");
+    if(slider) slider.style.display = "none";
+    if(btn) btn.style.display = "none";
+    return;
+  }
+
+  const slider = document.getElementById("radar-slider");
+  if(slider){
+    slider.addEventListener("input", e => { if(radarTimer) toggleRadarPlay(); setRadarFrame(parseInt(e.target.value,10)); });
+  }
+  const playBtn = document.getElementById("radar-play");
+  if(playBtn) playBtn.addEventListener("click", toggleRadarPlay);
+
+  // RainViewer publishes a new frame roughly every 10 min -- refetching the frame list once
+  // at page load means a tab left open quietly falls behind RainViewer's own live site, which
+  // is exactly what "our map shows different rain than RainViewer's" usually turns out to be:
+  // not different data, just an older snapshot of the same data. Keep it current the same way
+  // data.json is (setInterval, not a one-shot), skipping the snap-to-latest while an animation
+  // is actively mid-playback so it doesn't yank the frame out from under it.
+  setInterval(()=>{ if(!radarTimer) refreshRadarFrames({firstLoad:false}); }, 10*60*1000);
+}
+
+// Fetches RainViewer's current frame list and (re)points the tile layer at it. On first load
+// this also creates the layer; on every later call it just refreshes radarFrames/radarHost and,
+// unless something is actively mid-animation, jumps to the new latest frame. Returns false only
+// on first-load failure (there's nothing to fall back to yet); a later refresh that fails just
+// leaves the existing frames in place and logs a warning, rather than blanking a working radar.
+async function refreshRadarFrames({firstLoad}){
   try{
     const res = await fetch("https://api.rainviewer.com/public/weather-maps.json");
     if(!res.ok) throw new Error("bad status");
@@ -1133,35 +1224,30 @@ async function initRadar(){
     radarFrames = [...past, ...nowcast];
     if(!radarFrames.length) throw new Error("no frames");
 
-    const startIdx = Math.max(0, past.length - 1);
-    // RainViewer's radar mosaic over India tops out at native zoom 7 (likely satellite-derived
-    // here rather than ground radar, unlike the US/Europe) -- requesting a higher native zoom
-    // returns a "zoom level not supported" placeholder instead of data, even when it's genuinely
-    // pouring. maxNativeZoom makes Leaflet fetch the real z7 tile and CSS-scale it up to fill a
-    // closer view instead of requesting the unsupported zoom directly -- but pushed too far
-    // (we tested up to a 16x-32x scale, i.e. viewing at z11+) that upscale silently fails to
-    // paint at all in some browsers, rather than just looking blocky, which is worse than the
-    // placeholder it replaces. Capping the layer's own maxZoom keeps the scale factor small
-    // (<=4x, confirmed rendering correctly) -- past that zoom the radar simply stops updating
-    // rather than risk another silent blank.
-    radarLayer = L.tileLayer(radarFrameUrl(radarFrames[startIdx]), { opacity:.72, pane: "radarOverlay", maxNativeZoom: 7, maxZoom: 9 }).addTo(radarMap);
-
+    const latestIdx = Math.max(0, past.length - 1);
     const slider = document.getElementById("radar-slider");
-    if(slider){
-      slider.max = radarFrames.length - 1;
-      slider.addEventListener("input", e => { if(radarTimer) toggleRadarPlay(); setRadarFrame(parseInt(e.target.value,10)); });
+    if(slider) slider.max = radarFrames.length - 1;
+
+    if(firstLoad){
+      // RainViewer's radar mosaic over India tops out at native zoom 7 (likely satellite-derived
+      // here rather than ground radar, unlike the US/Europe) -- requesting a higher native zoom
+      // returns a "zoom level not supported" placeholder instead of data, even when it's genuinely
+      // pouring. maxNativeZoom makes Leaflet fetch the real z7 tile and CSS-scale it up to fill a
+      // closer view instead of requesting the unsupported zoom directly -- but pushed too far
+      // (we tested up to a 16x-32x scale, i.e. viewing at z11+) that upscale silently fails to
+      // paint at all in some browsers, rather than just looking blocky, which is worse than the
+      // placeholder it replaces. Capping the layer's own maxZoom keeps the scale factor small
+      // (<=4x, confirmed rendering correctly) -- past that zoom the radar simply stops updating
+      // rather than risk another silent blank.
+      radarLayer = L.tileLayer(radarFrameUrl(radarFrames[latestIdx]), { opacity:.72, pane: "radarOverlay", maxNativeZoom: 7, maxZoom: 9 }).addTo(radarMap);
+      setRadarFrame(latestIdx);
+    } else {
+      setRadarFrame(latestIdx);
     }
-    const playBtn = document.getElementById("radar-play");
-    if(playBtn) playBtn.addEventListener("click", toggleRadarPlay);
-
-    setRadarFrame(startIdx);
+    return true;
   }catch(e){
-    console.warn("radar load failed", e);
-    if(timeEl) timeEl.textContent = "Radar unavailable right now";
-    const slider = document.getElementById("radar-slider");
-    const btn = document.getElementById("radar-play");
-    if(slider) slider.style.display = "none";
-    if(btn) btn.style.display = "none";
+    console.warn("radar frame refresh failed", e);
+    return firstLoad ? false : true; // a failed later refresh just keeps showing the old frames
   }
 }
 initRadar();
@@ -1184,6 +1270,7 @@ async function loadData(){
     }
     renderDeparturePlan(d.departurePlanMorning || null, "leave-section-morning", "9&nbsp;AM&ndash;12&nbsp;PM IST");
     renderDeparturePlan(d.departurePlanToday || null, "leave-section", "2&ndash;9&nbsp;PM IST");
+    renderTomorrowRadar(d.tomorrowRadar || null);
   }catch(e){
     console.warn("data.json load failed", e);
   }

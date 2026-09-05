@@ -90,11 +90,48 @@ just stops updating rather than risk another silent blank.
 Since RainViewer's India coverage is capped this way, the "how to use it" panel also links
 out to two sources that don't have that limit: [IMD's own Doppler radar](https://mausam.imd.gov.in/imd_latest/contents/index_radar_animation.php)
 out of its Palam station (real ground-based reflectivity, far finer resolution, but a single
-static image refreshed every 10–15 minutes rather than an interactive layer — shown inline
-as a small thumbnail, cache-busted on the same cadence) and [FloodWatch Gurgaon](https://floodwatchgurgaon.in/),
-a citizen- and civic-body-sourced map of where waterlogging is actually being reported,
+static image rather than an interactive layer — shown inline as a small thumbnail). Its
+caption is deliberately hedged: checking it live, IMD's own copy was running about seven
+hours behind despite our fetching it fresh, so it can lag by hours rather than minutes with
+no way for us to detect that automatically (the timestamp is burned into the image pixels,
+not exposed as metadata) — the caption tells readers to check that printed timestamp before
+trusting it over the live map above it. The second link, [FloodWatch Gurgaon](https://floodwatchgurgaon.in/),
+is a citizen- and civic-body-sourced map of where waterlogging is actually being reported,
 sector by sector — the part rain totals alone can't tell you, since that depends on
 drainage as much as rainfall.
+
+The frame list itself used to be fetched once, on page load, and never again — meaning a
+tab left open for a while quietly fell behind RainViewer's own live site, which keeps
+polling. That's the most common reason "our map and RainViewer's own site show different
+rain": not different data, an older snapshot of the same data. It now refetches the frame
+list every 10 minutes (skipping the refresh, not the fetch, while an animation happens to
+be mid-playback so it doesn't yank the frame out from under it), the same way `data.json`
+itself refreshes every 5.
+
+### Close-up view (Tomorrow.io)
+
+RainViewer's zoom-7 cap for India means the live map is necessarily a *wide* view — it can
+show a storm sitting over Gurugram, but not much finer than "somewhere over the city."
+[Tomorrow.io](https://www.tomorrow.io)'s map-tile API covers India up to zoom 12, by
+blending five geostationary satellites' IR brightness temperature with forecast-model
+context and terrestrial microwave links, calibrated against ground radar via ML — built
+specifically to estimate rain in places (India among them) that don't share a raw radar
+feed. `sync.mjs` fetches one zoom-11 tile per field (`precipitationIntensity` and
+`cloudCover` — confirmed both corridor endpoints, DLF Phase 5 and the Leena.AI office, land
+in the *same* tile, so one tile per field is enough) each run and commits them alongside
+`data.json` as `tomorrow-precipitationIntensity.png` / `tomorrow-cloudCover.png`. The "Live
+radar" section shows them as a small close-up pair once they exist, timestamped from
+`data.json`'s `tomorrowRadar.time`.
+
+This is deliberately a static snapshot, not an interactive layer like RainViewer's: the key
+is used server-side only (sent as an `apikey` header, never a URL query string, so it never
+ends up in an Actions log or a committed file), and the free tier's real constraint is the
+**25-requests/hour** cap, not the 500/day one — two sync runs can land in the same clock
+hour, so this stays at 2 requests/run (4/hour at worst) rather than the dozens a multi-tile
+animated grid would need. Set it up by creating a free account at
+[tomorrow.io](https://www.tomorrow.io/weather-api/) and adding the key as a repo secret
+named `TOMORROW_API_KEY` (same place as the two secrets below) — everything degrades
+gracefully without it: `sync.mjs` just skips the fetch and the section stays hidden.
 
 ## Files
 
@@ -102,7 +139,8 @@ drainage as much as rainfall.
 |---|---|
 | `index.html` | The dashboard itself — all HTML/CSS/JS in one file |
 | `data.json` | The current live data, rewritten every ~30 min by the Action |
-| `scripts/sync.mjs` | Node script that fetches the three APIs and writes `data.json` |
+| `scripts/sync.mjs` | Node script that fetches the APIs and writes `data.json` (and the two Tomorrow.io tiles below, if configured) |
+| `tomorrow-precipitationIntensity.png`, `tomorrow-cloudCover.png` | Close-up radar/cloud snapshots for the commute corridor, rewritten every ~30 min alongside `data.json` (only if `TOMORROW_API_KEY` is set) |
 | `.github/workflows/sync.yml` | The scheduled GitHub Actions workflow |
 | `gurugram-widget.js` | A Scriptable script for an iPad/iPhone home-screen widget (see below) |
 
@@ -128,8 +166,10 @@ Weather Union and Open-Meteo are free/unlimited and refresh every 30 minutes reg
 
 ## Setting up from scratch
 
-1. Add two repository secrets (**Settings → Secrets and variables → Actions**):
-   `WEATHERUNION_KEY` and `GOOGLE_ROUTES_KEY`.
+1. Add repository secrets (**Settings → Secrets and variables → Actions**):
+   `WEATHERUNION_KEY` and `GOOGLE_ROUTES_KEY` (required), plus optionally `TOMORROW_API_KEY`
+   for the close-up radar/cloud snapshot (see "Close-up view (Tomorrow.io)" above) — the
+   dashboard works fine without it, that section just stays hidden.
 2. Make the repo public (GitHub Pages' free tier requires it) and enable **Pages**
    (Settings → Pages → Source: Deploy from a branch → `main` / `/(root)`).
 3. Run the "Sync weather & traffic data" workflow once manually
