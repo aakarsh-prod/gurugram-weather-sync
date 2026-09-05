@@ -254,13 +254,15 @@
   .radar-other-body a{color:var(--ink); font-weight:600; font-size:13px; text-decoration:none;}
   .radar-other-body a:hover{color:var(--accent-ink);}
   .radar-other-body span{font-size:12px; color:var(--muted); line-height:1.5;}
-  .radar-tomorrow{border-top:1px solid var(--line); padding-top:13px; display:flex; flex-direction:column; gap:10px;}
-  .radar-tomorrow-hint{font-size:12px; color:var(--muted); line-height:1.5; margin:0;}
-  .radar-tomorrow-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
-  .radar-tomorrow-tile{display:flex; flex-direction:column; gap:6px;}
-  .radar-tomorrow-tile img{width:100%; aspect-ratio:1; border-radius:8px; border:1px solid var(--line); object-fit:cover; background:var(--surface-2);}
-  .radar-tomorrow-tile .tt-label{font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted); display:flex; justify-content:space-between; gap:6px;}
-  .radar-tomorrow-tile .tt-label b{color:var(--ink); font-weight:600;}
+  .radar-tomorrow{margin-top:16px; padding-top:18px; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:12px;}
+  .radar-tomorrow[hidden]{display:none;}
+  .radar-tomorrow-hint{font-size:13px; color:var(--muted); line-height:1.6; margin:0; max-width:70ch;}
+  .radar-tomorrow-row{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  @media (max-width:640px){ .radar-tomorrow-row{grid-template-columns:1fr;} }
+  .radar-tomorrow-tile{display:flex; flex-direction:column; gap:8px;}
+  .radar-tomorrow-tile img{width:100%; aspect-ratio:1; max-height:420px; border-radius:12px; border:1px solid var(--line); box-shadow:var(--shadow); object-fit:cover; background:var(--surface-2);}
+  .radar-tomorrow-tile .tt-label{font-size:12.5px; font-family:'JetBrains Mono',monospace; color:var(--muted); display:flex; justify-content:space-between; gap:6px;}
+  .radar-tomorrow-tile .tt-label b{color:var(--ink); font-weight:600; font-size:13px;}
 
   /* headline strip */
   .headline{
@@ -436,21 +438,6 @@
         </ul>
         <a class="radar-source" href="https://www.rainviewer.com/india/weather-radar-map-live-gurugram.html" target="_blank" rel="noopener">Open full RainViewer map &#8599;</a>
 
-        <div class="radar-tomorrow" id="tomorrow-radar-block" hidden>
-          <div class="subsection-label">Close-up view (ours, every 30 min)</div>
-          <p class="radar-tomorrow-hint">Tomorrow.io's satellite-blended estimate for just the DLF&nbsp;Phase&nbsp;5&ndash;Leena.AI corridor &mdash; fetched by our own sync run, so it's a static snapshot rather than an animated layer, but it isn't capped at RainViewer's coarse India zoom.</p>
-          <div class="radar-tomorrow-row">
-            <div class="radar-tomorrow-tile">
-              <img id="tt-precip" alt="Tomorrow.io precipitation intensity over the commute corridor">
-              <div class="tt-label"><b>Precipitation</b><span id="tt-time-precip"></span></div>
-            </div>
-            <div class="radar-tomorrow-tile">
-              <img id="tt-cloud" alt="Tomorrow.io cloud cover over the commute corridor">
-              <div class="tt-label"><b>Cloud cover</b><span id="tt-time-cloud"></span></div>
-            </div>
-          </div>
-        </div>
-
         <div class="radar-other">
           <div class="subsection-label">Other sources worth checking</div>
           <div class="radar-other-item">
@@ -466,6 +453,21 @@
               <span>A citizen + civic-body hotspot map of where waterlogging is actually being reported right now, sector by sector &mdash; the piece rain radar alone can't tell you, since that depends on drainage, not just rainfall.</span>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="radar-tomorrow" id="tomorrow-radar-block" hidden>
+      <div class="subsection-label">Close-up view (ours, every 30 min)</div>
+      <p class="radar-tomorrow-hint">Tomorrow.io's satellite-blended estimate for just the DLF&nbsp;Phase&nbsp;5&ndash;Leena.AI corridor &mdash; fetched by our own sync run, so it's a static snapshot rather than an animated layer, but it isn't capped at RainViewer's coarse India zoom.</p>
+      <div class="radar-tomorrow-row">
+        <div class="radar-tomorrow-tile">
+          <img id="tt-precip" alt="Tomorrow.io precipitation intensity over the commute corridor">
+          <div class="tt-label"><b>Precipitation</b><span id="tt-time-precip"></span></div>
+        </div>
+        <div class="radar-tomorrow-tile">
+          <img id="tt-cloud" alt="Tomorrow.io cloud cover over the commute corridor">
+          <div class="tt-label"><b>Cloud cover</b><span id="tt-time-cloud"></span></div>
         </div>
       </div>
     </div>
