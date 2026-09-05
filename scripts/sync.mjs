@@ -174,6 +174,57 @@ async function fetchTomorrowRadar() {
   return { time: nowIso, zoom: TOMORROW_ZOOM, tiles: TOMORROW_TILES, fields };
 }
 
+// Golf-course weather: only wanted Friday-Sunday IST (weekday golf isn't happening), so this
+// deliberately returns null outside that window rather than a stale carried-over forecast --
+// a Sunday-night rain outlook is actively misleading if it's still showing on a Tuesday.
+// Open-Meteo is free/unlimited (unlike Tomorrow.io), so no request-budget concerns here.
+// Coordinates sourced from each course's own GolfPass "Get Directions" map link:
+//   Qutab Golf Course: Press Enclave Road, Lado Sarai, New Delhi 110017
+//   Karma Lakelands:   Sector 80, Gurugram (Manesar side), Haryana
+const GOLF_COURSES = [
+  { id: "qutab", name: "Qutab Golf Course", area: "Lado Sarai, Delhi", lat: 28.53063785, lon: 77.1973041445 },
+  { id: "karma", name: "Karma Lakelands", area: "Sector 80, Gurugram", lat: 28.3628194877, lon: 76.9575145841 },
+];
+
+async function fetchOpenMeteoFor(lat, lon) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,wind_speed_10m,weather_code&hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m,weather_code&timezone=Asia%2FKolkata&forecast_days=3`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const j = await res.json();
+  const nowIdx = j.hourly.time.findIndex(t => t.slice(11, 13) === j.current.time.slice(11, 13));
+  const startIdx = nowIdx >= 0 ? nowIdx : 0;
+  const hourly = [];
+  for (let i = startIdx; i < Math.min(startIdx + 12, j.hourly.time.length); i++) {
+    hourly.push({
+      t: j.hourly.time[i].slice(11, 16),
+      temp: j.hourly.temperature_2m[i],
+      pop: j.hourly.precipitation_probability[i],
+      precip: j.hourly.precipitation[i],
+      wind: j.hourly.wind_speed_10m[i],
+      code: j.hourly.weather_code[i],
+    });
+  }
+  return {
+    current: { time: j.current.time, temp: j.current.temperature_2m, precip: j.current.precipitation, wind: j.current.wind_speed_10m, code: j.current.weather_code },
+    hourly,
+  };
+}
+
+async function fetchGolfWeather(weekday) {
+  if (!["Friday", "Saturday", "Sunday"].includes(weekday)) return null;
+  const courses = [];
+  for (const c of GOLF_COURSES) {
+    try {
+      const w = await fetchOpenMeteoFor(c.lat, c.lon);
+      courses.push({ id: c.id, name: c.name, area: c.area, ...w });
+    } catch (e) {
+      console.warn(`golf weather fetch failed for ${c.name}:`, e.message);
+      courses.push({ id: c.id, name: c.name, area: c.area, error: true });
+    }
+  }
+  return { generatedAt: new Date().toISOString(), courses };
+}
+
 const ROUTE_DEFS = {
   forward: { origin: "DLF Phase 5, Sector 53, Gurugram, Haryana", intermediates: ["Paras Hospital, Sector 43, Gurugram, Haryana", "Good Earth, Sector 50, Gurugram, Haryana", "Sispal Vihar, Sector 49, Gurugram, Haryana"], destination: "Welldon Techpark, Sector 48, Gurugram, Haryana" },
   "return-subhash": { origin: "Welldon Techpark, Sector 48, Gurugram, Haryana", intermediates: ["Paras Hospital, Sector 43, Gurugram, Haryana"], destination: "DLF Phase 5, Sector 53, Gurugram, Haryana" },
@@ -363,6 +414,7 @@ async function main() {
   const weekday = istWeekdayName();
   const weekdayFlag = isWeekday();
   const curMonth = date.slice(0, 7); // YYYY-MM, IST calendar
+  const golf = await fetchGolfWeather(weekday);
 
   let traffic = prev.traffic || null;
   let departurePlanToday = prev.departurePlanToday || null;
@@ -450,10 +502,11 @@ async function main() {
     departurePlanMorning,
     gmapsUsage: { month: curMonth, calls: gmapsCalls, budget: GMAPS_MONTHLY_BUDGET },
     tomorrowRadar,
+    golf,
   };
 
   await fs.writeFile(DATA_PATH, JSON.stringify(out, null, 2) + "\n");
-  console.log(`Synced ${stations.length} stations, weekday=${weekday}, traffic=${!!traffic}, eveningPlan=${!!(departurePlanToday && departurePlanToday.date === date)}, morningPlan=${!!(departurePlanMorning && departurePlanMorning.date === date)}, gmapsCalls=${gmapsCalls}/${GMAPS_MONTHLY_BUDGET}${gmapsSkipped ? " (budget-limited this run)" : ""}, tomorrowRadar=${tomorrowRadar ? "ok" : "skipped (no key)"}`);
+  console.log(`Synced ${stations.length} stations, weekday=${weekday}, traffic=${!!traffic}, eveningPlan=${!!(departurePlanToday && departurePlanToday.date === date)}, morningPlan=${!!(departurePlanMorning && departurePlanMorning.date === date)}, gmapsCalls=${gmapsCalls}/${GMAPS_MONTHLY_BUDGET}${gmapsSkipped ? " (budget-limited this run)" : ""}, tomorrowRadar=${tomorrowRadar ? "ok" : "skipped (no key)"}, golf=${golf ? "ok" : "skipped (not Fri-Sun)"}`);
 }
 
 main().catch(e => {
