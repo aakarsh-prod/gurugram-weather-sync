@@ -173,6 +173,29 @@ creating a free account at [tomorrow.io](https://www.tomorrow.io/weather-api/) a
 named `TOMORROW_API_KEY` (same place as the two secrets below) — everything degrades
 gracefully without it: `sync.mjs` just skips the fetch and the section stays hidden.
 
+A field that fails to fetch on a given run only hides its tile if it has never loaded
+successfully before; once a tile has shown a real image, a later transient failure just
+leaves that (now slightly stale) image in place — labeled "stale — latest fetch failed" next
+to its timestamp — rather than yanking the tile away, which is what made a tile look like it
+had randomly vanished the first time this happened.
+
+## Golf weather (Qutab Golf Course & Karma Lakelands)
+
+A second tab, separate from the commute dashboard, shows current conditions plus a 12-hour
+outlook (temperature, rain chance/amount, wind) for two specific golf courses: [Qutab Golf
+Course](https://dda.gov.in/sports/Qutab_Golf_Course) (Press Enclave Road, Lado Sarai, Delhi —
+28.53063785, 77.1973041445) and [Karma Lakelands](https://www.karmalakelands.com/golf/golf-course.html)
+(Sector 80, Gurugram — 28.3628194877, 76.9575145841). Both coordinates came from each course's
+own GolfPass "Get Directions" map link, not a guess.
+
+This only fetches and shows data **Friday through Sunday** (weekend golf, not weekday) — on
+any other day `sync.mjs`'s `fetchGolfWeather()` returns `null` outright rather than fetching
+anyway and hiding it, and `data.json`'s `golf` key is `null`. The tab explains this rather than
+just sitting empty. Unlike Tomorrow.io, this uses plain [Open-Meteo](https://open-meteo.com)
+(same free, unlimited, no-key API the main regional forecast already uses) called for these
+two specific points, so there's no quota math to worry about here — the Friday-Sunday gate is
+purely about not showing a stale weekday-irrelevant forecast, not about API limits.
+
 ## Files
 
 | File | Purpose |

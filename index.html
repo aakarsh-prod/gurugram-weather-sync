@@ -143,6 +143,27 @@
   .leave-slot.best{border-color:var(--good); background:color-mix(in srgb, var(--good) 16%, var(--surface-2)); box-shadow:0 0 14px -7px rgba(81,194,128,0.432);}
   .leave-slot.best .lm{color:var(--good);}
   .leave-empty{background:var(--surface-2); border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-size:13px; color:var(--muted);}
+  .tabbar{display:flex; gap:8px; margin:2px 0 20px;}
+  .tabbtn{padding:9px 18px; border-radius:999px; border:1px solid var(--line-bright, var(--line)); background:var(--surface); color:var(--muted); font-size:13.5px; font-weight:600; font-family:inherit; cursor:pointer; transition:border-color .15s, color .15s, background .15s;}
+  .tabbtn:hover{color:var(--ink); border-color:var(--accent);}
+  .tabbtn[aria-selected="true"]{background:var(--accent); color:var(--surface); border-color:var(--accent);}
+  .tab-panel[hidden]{display:none;}
+  .golf-course{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px 22px 20px; box-shadow:var(--shadow); margin-bottom:16px;}
+  .golf-course-head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+  .golf-course-head h3{margin:0; font-size:17px; font-weight:700; color:var(--ink);}
+  .golf-area{font-size:12.5px; color:var(--muted); font-family:'JetBrains Mono',monospace;}
+  .golf-current{display:flex; align-items:center; gap:14px; margin-bottom:16px; flex-wrap:wrap;}
+  .golf-current-icon{width:34px; height:34px; flex-shrink:0;}
+  .golf-current-temp{font-size:28px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums;}
+  .golf-current-cond{font-size:13.5px; color:var(--muted);}
+  .golf-current-wind{font-size:12.5px; color:var(--muted); font-family:'JetBrains Mono',monospace; margin-left:auto;}
+  .golf-hours{display:flex; gap:10px; overflow-x:auto; padding-bottom:4px;}
+  .golf-hour{flex:none; width:74px; display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px 6px; border-radius:10px; background:var(--surface-2); border:1px solid var(--line);}
+  .gh-time{font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace;}
+  .gh-icon{width:22px; height:22px;}
+  .gh-temp{font-size:14px; font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums;}
+  .gh-pop{font-size:11.5px; color:var(--rain); font-variant-numeric:tabular-nums;}
+  .gh-wind{font-size:10.5px; color:var(--muted); font-variant-numeric:tabular-nums;}
   .subsection-label{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:10px;}
   .subsection-label.leave-second{margin-top:22px;}
 
@@ -355,6 +376,13 @@
     <div class="updated" id="updated-el"><span class="dot"></span>Loading latest reading&hellip;</div>
   </header>
 
+  <div class="tabbar" role="tablist" aria-label="Dashboard sections">
+    <button type="button" class="tabbtn" id="tabbtn-commute" role="tab" aria-selected="true" aria-controls="tab-panel-commute">Commute</button>
+    <button type="button" class="tabbtn" id="tabbtn-golf" role="tab" aria-selected="false" aria-controls="tab-panel-golf">Golf weather</button>
+  </div>
+
+  <div id="tab-panel-commute" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-commute">
+
   <div class="hero" id="hero"></div>
 
   <div class="advisories" id="advisories"></div>
@@ -497,6 +525,18 @@
       </div>
     </div>
   </section>
+
+  </div><!-- /#tab-panel-commute -->
+
+  <div id="tab-panel-golf" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-golf" hidden>
+    <section>
+      <div class="section-head">
+        <h2>Golf weather</h2>
+        <div class="hint">Qutab Golf Course (Delhi) &amp; Karma Lakelands (Gurugram) &middot; Friday&ndash;Sunday only</div>
+      </div>
+      <div id="golf-content"></div>
+    </section>
+  </div><!-- /#tab-panel-golf -->
 
   <footer>
     <span>Data: <a href="https://www.weatherunion.com" target="_blank" rel="noopener">Weather Union (Zomato)</a> &amp; <a href="https://open-meteo.com" target="_blank" rel="noopener">Open&#8209;Meteo</a></span>
@@ -850,10 +890,12 @@ function setTomorrowOverlay(entry, field, cacheBust){
 function renderTomorrowRadar(tomorrowRadar){
   const block = document.getElementById("tomorrow-radar-block");
   if(!block) return;
-  if(!tomorrowRadar || !tomorrowRadar.fields || !(tomorrowRadar.fields.precipitationIntensity || tomorrowRadar.fields.cloudCover)){
+  const everShown = !!tomorrowMaps; // once we've shown real data, don't re-hide the whole block over one bad run
+  if(!everShown && (!tomorrowRadar || !tomorrowRadar.fields || !(tomorrowRadar.fields.precipitationIntensity || tomorrowRadar.fields.cloudCover))){
     block.hidden = true;
     return;
   }
+  if(!tomorrowRadar || !tomorrowRadar.fields) tomorrowRadar = { fields: {} }; // keep showing stale tiles below
   block.hidden = false;
   const maps = ensureTomorrowMaps();
   if(!maps) return; // Leaflet not loaded (e.g. offline) -- section stays hidden rather than showing broken tiles
@@ -861,23 +903,27 @@ function renderTomorrowRadar(tomorrowRadar){
   const timeText = isNaN(stamp) ? "" : stamp.toLocaleTimeString("en-IN", {hour:"2-digit", minute:"2-digit", hour12:true, timeZone:"Asia/Kolkata"});
   const cacheBust = "?_=" + encodeURIComponent(tomorrowRadar.time || Date.now());
 
-  const precipTile = document.getElementById("tt-precip-map").closest(".radar-tomorrow-tile");
-  if(tomorrowRadar.fields.precipitationIntensity){
-    if(precipTile) precipTile.style.display = "";
-    setTomorrowOverlay(maps.precip, "precipitationIntensity", cacheBust);
-    const t = document.getElementById("tt-time-precip"); if(t) t.textContent = timeText;
-  } else if(precipTile){
-    precipTile.style.display = "none";
-  }
-
-  const cloudTile = document.getElementById("tt-cloud-map").closest(".radar-tomorrow-tile");
-  if(tomorrowRadar.fields.cloudCover){
-    if(cloudTile) cloudTile.style.display = "";
-    setTomorrowOverlay(maps.cloud, "cloudCover", cacheBust);
-    const t = document.getElementById("tt-time-cloud"); if(t) t.textContent = timeText;
-  } else if(cloudTile){
-    cloudTile.style.display = "none";
-  }
+  // A field failing on THIS run only hides its tile if we've never shown it successfully --
+  // once there's a previously-successful image in place, a single missed fetch just leaves
+  // that (now slightly stale) image up rather than yanking the whole tile away, which was
+  // the bug behind a tile appearing to randomly "disappear" after one transient failure.
+  const applyField = (fieldKey, mapEntry, tileId, timeId) => {
+    const tile = document.getElementById(tileId).closest(".radar-tomorrow-tile");
+    const timeEl = document.getElementById(timeId);
+    const hadPrevious = mapEntry.overlays.size > 0;
+    if(tomorrowRadar.fields[fieldKey]){
+      if(tile) tile.style.display = "";
+      setTomorrowOverlay(mapEntry, fieldKey, cacheBust);
+      if(timeEl) timeEl.textContent = timeText;
+    } else if(hadPrevious){
+      if(tile) tile.style.display = "";
+      if(timeEl) timeEl.textContent = timeText + " (stale — latest fetch failed)";
+    } else if(tile){
+      tile.style.display = "none";
+    }
+  };
+  applyField("precipitationIntensity", maps.precip, "tt-precip-map", "tt-time-precip");
+  applyField("cloudCover", maps.cloud, "tt-cloud-map", "tt-time-cloud");
 }
 
 // SVG path for a bar whose top two corners are rounded, bottom square (rests on baseline).
@@ -1353,11 +1399,81 @@ async function loadData(){
     renderDeparturePlan(d.departurePlanMorning || null, "leave-section-morning", "9&nbsp;AM&ndash;12&nbsp;PM IST");
     renderDeparturePlan(d.departurePlanToday || null, "leave-section", "2&ndash;9&nbsp;PM IST");
     renderTomorrowRadar(d.tomorrowRadar || null);
+    renderGolf(d.golf || null);
   }catch(e){
     console.warn("data.json load failed", e);
   }
 }
 loadData();
+
+/* ---------- tab switching (Commute / Golf weather) ---------- */
+(function initTabs(){
+  const tabs = [
+    { btn: document.getElementById("tabbtn-commute"), panel: document.getElementById("tab-panel-commute") },
+    { btn: document.getElementById("tabbtn-golf"), panel: document.getElementById("tab-panel-golf") },
+  ];
+  tabs.forEach(({ btn }) => {
+    if(!btn) return;
+    btn.addEventListener("click", () => {
+      tabs.forEach(({ btn: b, panel: p }) => {
+        const active = b === btn;
+        b.setAttribute("aria-selected", active ? "true" : "false");
+        if(p) p.hidden = !active;
+      });
+      // Leaflet maps mis-measure themselves if sized while their container was hidden --
+      // fix that up now that the Commute tab (radar + Tomorrow.io maplets) is visible again.
+      if(btn.id === "tabbtn-commute"){
+        if(typeof radarMap !== "undefined" && radarMap) radarMap.invalidateSize();
+        if(tomorrowMaps){
+          tomorrowMaps.precip.map.invalidateSize();
+          tomorrowMaps.cloud.map.invalidateSize();
+        }
+      }
+    });
+  });
+})();
+
+// WMO weather-code icons/labels (WMO, weatherIcon) are defined further down but already
+// loaded by the time this runs since script order is top-to-bottom and this only executes
+// on data arrival / user interaction, never at parse time.
+function renderGolf(golf){
+  const el = document.getElementById("golf-content");
+  if(!el) return;
+  if(!golf || !golf.courses){
+    el.innerHTML = `<div class="leave-empty">Golf weather is only fetched Friday through Sunday &mdash; a Tuesday forecast for last weekend would just be stale. Check back this weekend for Qutab Golf Course and Karma Lakelands.</div>`;
+    return;
+  }
+  el.innerHTML = golf.courses.map(c=>{
+    if(c.error || !c.current){
+      return `<div class="golf-course">
+        <div class="golf-course-head"><h3>${c.name}</h3><span class="golf-area">${c.area}</span></div>
+        <div class="leave-empty">This course's forecast failed to fetch this run &mdash; will retry next sync.</div>
+      </div>`;
+    }
+    const cur = c.current;
+    const hours = (c.hourly||[]).map(h=>`
+      <div class="golf-hour">
+        <div class="gh-time">${fmtSlotTime(h.t)}</div>
+        <div class="gh-icon">${weatherIcon(h.code)}</div>
+        <div class="gh-temp">${Math.round(h.temp)}&deg;</div>
+        <div class="gh-pop">${h.pop}%</div>
+        <div class="gh-wind">${Math.round(h.wind)}&nbsp;km/h</div>
+      </div>`).join("");
+    return `<div class="golf-course">
+      <div class="golf-course-head">
+        <h3>${c.name}</h3>
+        <span class="golf-area">${c.area}</span>
+      </div>
+      <div class="golf-current">
+        <span class="golf-current-icon">${weatherIcon(cur.code)}</span>
+        <span class="golf-current-temp">${Math.round(cur.temp)}&deg;</span>
+        <span class="golf-current-cond">${WMO[cur.code]||"&mdash;"}</span>
+        <span class="golf-current-wind">Wind ${Math.round(cur.wind)}&nbsp;km/h</span>
+      </div>
+      <div class="golf-hours">${hours}</div>
+    </div>`;
+  }).join("");
+}
 setInterval(loadData, 5*60*1000);
 
 // IMD's radar GIF is overwritten in place at the same URL, so a plain <img> can go stale
