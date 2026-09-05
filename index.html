@@ -435,7 +435,7 @@
             <img class="radar-other-thumb" id="imd-thumb" src="https://mausam.imd.gov.in/Radar/caz_delhi.gif" alt="IMD Doppler radar, Palam station" loading="lazy">
             <div class="radar-other-body">
               <a href="https://mausam.imd.gov.in/imd_latest/contents/index_radar_animation.php" target="_blank" rel="noopener">IMD Doppler radar (Palam) &#8599;</a>
-              <span>India's own ground-based radar &mdash; real reflectivity data at much finer resolution than RainViewer's regional feed, which is satellite-derived here and capped at a coarse zoom. Not interactive and not on our map (it's a single static image, refreshed every 10&ndash;15 min by IMD), but the most authoritative single frame available for Gurugram right now.</span>
+              <span>India's own ground-based radar &mdash; real reflectivity data at much finer resolution than RainViewer's regional feed, which is satellite-derived here and capped at a coarse zoom. Not interactive and not on our map (it's a single static image), and IMD's own refresh of it can lag by hours rather than minutes &mdash; check the timestamp printed in its corner (UTC and IST) before trusting it over the live map above.</span>
             </div>
           </div>
           <div class="radar-other-item">
@@ -1191,9 +1191,11 @@ async function loadData(){
 loadData();
 setInterval(loadData, 5*60*1000);
 
-// IMD's radar GIF is periodically overwritten in place at the same URL, so a plain <img>
-// can go stale silently if the page stays open -- cache-bust it every 10 min to match
-// IMD's own refresh cadence.
+// IMD's radar GIF is overwritten in place at the same URL, so a plain <img> can go stale
+// silently if the page stays open. We poll every 10 min hoping to catch a fresher one --
+// but IMD's own upstream refresh has been observed lagging by hours, not minutes, so this
+// only bounds how late WE are; it can't fix IMD being late. That's exactly why the caption
+// says to read the timestamp baked into the image rather than trust it's current.
 setInterval(()=>{
   const imd = document.getElementById("imd-thumb");
   if(imd) imd.src = "https://mausam.imd.gov.in/Radar/caz_delhi.gif?_=" + Date.now();
