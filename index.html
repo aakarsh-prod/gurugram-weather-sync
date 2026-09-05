@@ -263,6 +263,7 @@
   .radar-tomorrow-maplet{width:100%; aspect-ratio:0.5; max-height:640px; border-radius:12px; border:1px solid var(--line); box-shadow:var(--shadow); background:var(--surface-2); overflow:hidden;}
   .radar-tomorrow-maplet .leaflet-control-attribution{background:rgba(21,28,44,.7); color:var(--muted); font-size:9px;}
   .radar-tomorrow-maplet .leaflet-control-attribution a{color:var(--rain);}
+  .tt-zoom-badge{background:rgba(21,28,44,.82); color:var(--muted); font-size:10px; font-family:'JetBrains Mono',monospace; padding:3px 7px; border-radius:5px; border:1px solid var(--line); margin:0 0 4px 4px !important; white-space:nowrap;}
   .radar-tomorrow-tile .tt-label{font-size:12.5px; font-family:'JetBrains Mono',monospace; color:var(--muted); display:flex; justify-content:space-between; gap:6px;}
   .radar-tomorrow-tile .tt-label b{color:var(--ink); font-weight:600; font-size:13px;}
   .radar-tomorrow-legend{font-size:11.5px; color:var(--muted); margin:0;}
@@ -785,6 +786,27 @@ const TOMORROW_TILES = [
 const TOMORROW_MOSAIC_BOUNDS = [[21.943046, 73.125], [31.952162, 78.750]]; // full stitched extent
 let tomorrowMaps = null;
 
+// Small always-visible readout so "is this at native detail" has an actual answer on screen
+// instead of needing to eyeball pixelation. The color PNGs are fixed-resolution (TOMORROW_ZOOM);
+// only the basemap underneath gets sharper as you zoom past that.
+function addZoomBadge(map){
+  const badge = L.control({ position: "bottomleft" });
+  badge.onAdd = function(){
+    const div = L.DomUtil.create("div", "tt-zoom-badge");
+    const update = () => {
+      const z = Math.round(map.getZoom());
+      const past = z - TOMORROW_ZOOM;
+      div.textContent = past <= 0
+        ? `map zoom ${z} — color layer at native detail`
+        : `map zoom ${z} — color layer ${past} level${past > 1 ? "s" : ""} past native (enlarged)`;
+    };
+    map.on("zoom", update);
+    update();
+    return div;
+  };
+  badge.addTo(map);
+}
+
 function ensureTomorrowMaps(){
   if(tomorrowMaps) return tomorrowMaps;
   if(typeof L === "undefined") return null;
@@ -800,6 +822,7 @@ function ensureTomorrowMaps(){
     L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}", {
       maxZoom:16
     }).addTo(map);
+    addZoomBadge(map);
     return { map, overlays:new Map() }; // overlays keyed by "x,y", one per mosaic tile
   };
   const precip = mk("tt-precip-map");
