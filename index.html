@@ -247,6 +247,13 @@
   .radar-legend i{width:9px; height:9px; border-radius:3px; display:inline-block;}
   .radar-source{font-size:12.5px; color:var(--rain); text-decoration:none; font-family:'JetBrains Mono',monospace; width:fit-content;}
   .radar-source:hover{text-decoration:underline;}
+  .radar-other{border-top:1px solid var(--line); padding-top:13px; display:flex; flex-direction:column; gap:11px;}
+  .radar-other-item{display:flex; gap:11px; align-items:flex-start;}
+  .radar-other-thumb{width:64px; height:52px; border-radius:8px; border:1px solid var(--line); object-fit:cover; flex-shrink:0; background:var(--surface-2);}
+  .radar-other-body{display:flex; flex-direction:column; gap:2px; min-width:0;}
+  .radar-other-body a{color:var(--ink); font-weight:600; font-size:13px; text-decoration:none;}
+  .radar-other-body a:hover{color:var(--accent-ink);}
+  .radar-other-body span{font-size:12px; color:var(--muted); line-height:1.5;}
 
   /* headline strip */
   .headline{
@@ -421,6 +428,23 @@
           <li>Tiles load straight from RainViewer in your browser &mdash; independent of this site's own 30&#8209;min data refresh and the Google Maps budget.</li>
         </ul>
         <a class="radar-source" href="https://www.rainviewer.com/india/weather-radar-map-live-gurugram.html" target="_blank" rel="noopener">Open full RainViewer map &#8599;</a>
+
+        <div class="radar-other">
+          <div class="subsection-label">Other sources worth checking</div>
+          <div class="radar-other-item">
+            <img class="radar-other-thumb" id="imd-thumb" src="https://mausam.imd.gov.in/Radar/caz_delhi.gif" alt="IMD Doppler radar, Palam station" loading="lazy">
+            <div class="radar-other-body">
+              <a href="https://mausam.imd.gov.in/imd_latest/contents/index_radar_animation.php" target="_blank" rel="noopener">IMD Doppler radar (Palam) &#8599;</a>
+              <span>India's own ground-based radar &mdash; real reflectivity data at much finer resolution than RainViewer's regional feed, which is satellite-derived here and capped at a coarse zoom. Not interactive and not on our map (it's a single static image, refreshed every 10&ndash;15 min by IMD), but the most authoritative single frame available for Gurugram right now.</span>
+            </div>
+          </div>
+          <div class="radar-other-item">
+            <div class="radar-other-body">
+              <a href="https://floodwatchgurgaon.in/" target="_blank" rel="noopener">FloodWatch Gurgaon &#8599;</a>
+              <span>A citizen + civic-body hotspot map of where waterlogging is actually being reported right now, sector by sector &mdash; the piece rain radar alone can't tell you, since that depends on drainage, not just rainfall.</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -677,7 +701,10 @@ function renderConditions(conditions, stations){
   if(city.temp && city.temp.state==="hot"){
     chips.push({tone:"warning", icon:"heat", text:`<b>Hot</b> citywide for ${durationText(city.temp.since, now)}`});
   }
-  if(city.humidity && (city.humidity.state==="humid" || city.humidity.state==="very-humid")){
+  // Humidity is largely a side-effect of rain, so once it's actively raining citywide,
+  // drop the humidity chip rather than stating the obvious twice.
+  const cityRaining = city.rain && city.rain.spell === "wet";
+  if(!cityRaining && city.humidity && (city.humidity.state==="humid" || city.humidity.state==="very-humid")){
     const label = city.humidity.state==="very-humid" ? "Very humid" : "Humid";
     chips.push({tone:"info", icon:"humidity", text:`<b>${label}</b> citywide for ${durationText(city.humidity.since, now)}`});
   }
@@ -686,23 +713,24 @@ function renderConditions(conditions, stations){
     ? chips.map(c=>`<div class="condition-chip tone-${c.tone}"><div class="c-badge">${CONDITION_ICONS[c.icon]}</div><span>${c.text}</span></div>`).join("")
     : `<div class="conditions-empty">Nothing sustained right now &mdash; conditions are near baseline citywide.</div>`;
 
+  // Each zone gets exactly ONE pill -- the single most salient thing going on there --
+  // rather than a pill per condition, so a rainy zone doesn't get buried under its own
+  // "very humid" pill (rain is what actually affects the commute; humidity is ambient).
+  // Priority: rain (any sustained wet spell) > strong wind > heat > very-humid.
   const stationConds = conditions.stations || {};
   const zonePills = [];
   for(const s of stations){
     const c = stationConds[s.id];
     if(!c) continue;
     const zname = s.name.split(",")[0];
-    if(c.rain && c.rain.spell==="wet" && (c.rain.intensity_state==="moderate" || c.rain.intensity_state==="heavy")){
-      const tone = c.rain.intensity_state==="heavy" ? "critical" : "warning";
+    if(c.rain && c.rain.spell==="wet"){
+      const tone = c.rain.intensity_state==="heavy" ? "critical" : c.rain.intensity_state==="moderate" ? "warning" : "info";
       zonePills.push({tone, text:`<b>${zname}</b> &middot; ${c.rain.intensity_state} rain, ${c.rain.pattern==="sporadic"?"on/off":"steady"} ${durationText(c.rain.spell_since, now)}`});
-    }
-    if(c.wind && c.wind.state==="strong"){
+    }else if(c.wind && c.wind.state==="strong"){
       zonePills.push({tone:"warning", text:`<b>${zname}</b> &middot; windy ${durationText(c.wind.since, now)}`});
-    }
-    if(c.temp && c.temp.state==="hot"){
+    }else if(c.temp && c.temp.state==="hot"){
       zonePills.push({tone:"warning", text:`<b>${zname}</b> &middot; hot ${durationText(c.temp.since, now)}`});
-    }
-    if(c.humidity && c.humidity.state==="very-humid"){
+    }else if(c.humidity && c.humidity.state==="very-humid"){
       zonePills.push({tone:"info", text:`<b>${zname}</b> &middot; very humid ${durationText(c.humidity.since, now)}`});
     }
   }
@@ -1059,7 +1087,11 @@ async function initRadar(){
   }
 
   const CENTER = [28.44, 77.08]; // DLF Phase 5 <-> Leena.AI Sector 48 commute corridor, midpoint
-  radarMap = L.map(mapEl, {zoomControl:true, attributionControl:true}).setView(CENTER, 11);
+  // Starts at 9, not closer in -- see the maxNativeZoom note below on why the radar layer
+  // itself needs to stay near RainViewer's real resolution. The base map can still be zoomed
+  // in further by hand for street-level detail; the radar overlay just won't follow past its
+  // own cap.
+  radarMap = L.map(mapEl, {zoomControl:true, attributionControl:true}).setView(CENTER, 9);
 
   // Base map: Esri's free "World Dark Gray" basemap -- dark by design (no CSS invert hack
   // needed), no API key or signup, and served from Esri's own CDN rather than the plain
@@ -1102,7 +1134,17 @@ async function initRadar(){
     if(!radarFrames.length) throw new Error("no frames");
 
     const startIdx = Math.max(0, past.length - 1);
-    radarLayer = L.tileLayer(radarFrameUrl(radarFrames[startIdx]), { opacity:.72, pane: "radarOverlay" }).addTo(radarMap);
+    // RainViewer's radar mosaic over India tops out at native zoom 7 (likely satellite-derived
+    // here rather than ground radar, unlike the US/Europe) -- requesting a higher native zoom
+    // returns a "zoom level not supported" placeholder instead of data, even when it's genuinely
+    // pouring. maxNativeZoom makes Leaflet fetch the real z7 tile and CSS-scale it up to fill a
+    // closer view instead of requesting the unsupported zoom directly -- but pushed too far
+    // (we tested up to a 16x-32x scale, i.e. viewing at z11+) that upscale silently fails to
+    // paint at all in some browsers, rather than just looking blocky, which is worse than the
+    // placeholder it replaces. Capping the layer's own maxZoom keeps the scale factor small
+    // (<=4x, confirmed rendering correctly) -- past that zoom the radar simply stops updating
+    // rather than risk another silent blank.
+    radarLayer = L.tileLayer(radarFrameUrl(radarFrames[startIdx]), { opacity:.72, pane: "radarOverlay", maxNativeZoom: 7, maxZoom: 9 }).addTo(radarMap);
 
     const slider = document.getElementById("radar-slider");
     if(slider){
@@ -1148,6 +1190,14 @@ async function loadData(){
 }
 loadData();
 setInterval(loadData, 5*60*1000);
+
+// IMD's radar GIF is periodically overwritten in place at the same URL, so a plain <img>
+// can go stale silently if the page stays open -- cache-bust it every 10 min to match
+// IMD's own refresh cadence.
+setInterval(()=>{
+  const imd = document.getElementById("imd-thumb");
+  if(imd) imd.src = "https://mausam.imd.gov.in/Radar/caz_delhi.gif?_=" + Date.now();
+}, 10*60*1000);
 </script>
 </body>
 </html>

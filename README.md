@@ -52,17 +52,49 @@ this been true" rather than just "what's true right now":
 - Only non-baseline states ever show up on the dashboard — calm, mild, and normal humidity
   never earn a callout. A brief sensor outage freezes a station's streak rather than
   resetting it, so a 30-minute gap in readings doesn't wipe out a 3-hour streak.
+- Each zone shows exactly **one** callout, not one per condition — rain (any sustained
+  spell, however light) takes precedence over wind, heat, and humidity, since humidity is
+  largely a side-effect of rain and otherwise ends up repeated identically on every zone
+  during a storm. The same precedence applies citywide: once it's actively raining, the
+  humidity chip drops rather than stating the obvious a second time.
 
 ## Live radar
 
-A radar map (tiles from [RainViewer](https://www.rainviewer.com)'s free public API, on a
-dark CARTO basemap via [Leaflet](https://leafletjs.com)) sits alongside a "how to use it"
-panel further down the page. It animates the last ~2 hours of precipitation plus a short
-nowcast, centered on the DLF Phase 5 ↔ Leena.AI corridor. This is entirely independent of
-`sync.mjs` — the visitor's own browser pulls the tiles directly, so it never touches the
-Google Maps budget or this site's own 30-minute refresh cycle. If RainViewer or the tile
-CDN is unreachable, the section degrades to a link to RainViewer's own live map instead of
-showing a broken map.
+A radar map (tiles from [RainViewer](https://www.rainviewer.com)'s free public API, on
+Esri's free "World Dark Gray" basemap via [Leaflet](https://leafletjs.com) — dark by
+design, no API key or account needed anywhere in this stack) sits alongside a "how to use
+it" panel further down the page. It animates RainViewer's full available history (usually
+~13 frames / ~2 hours at 10-min steps) plus any short nowcast it offers, centered on the
+DLF Phase 5 ↔ Leena.AI corridor. This is entirely independent of `sync.mjs` — the
+visitor's own browser pulls the tiles directly, so it never touches the Google Maps budget
+or this site's own 30-minute refresh cycle. If RainViewer or Esri's tiles are unreachable,
+the section degrades to a link to RainViewer's own live map instead of showing a broken map.
+
+(Earlier drafts tried CARTO's dark basemap, then plain OpenStreetMap tiles with a CSS
+invert filter — CARTO now requires a paid API key for its raster tiles, and the OSM tiles
+occasionally served "Zoom Level Not Supported" placeholder tiles under embedded/automated
+use, which OSM's own tile usage policy discourages for exactly this kind of embedding.
+Esri's dark basemap avoids both problems.)
+
+RainViewer's own radar mosaic over India tops out at native zoom 7 (it's satellite-derived
+here, not ground radar, unlike the US/Europe) — requesting a closer zoom returns a "zoom
+level not supported" placeholder instead of data, even during genuinely heavy rain. The map
+now opens at zoom 9 and the radar layer caps itself there too (`maxZoom: 9` alongside
+`maxNativeZoom: 7`), so Leaflet only ever has to stretch the real z7 tile by a small, safe
+factor. Letting it stretch further — which an initial zoom-11 view required — turned out to
+silently fail to paint at all in testing (a big CSS `scale()` on a raster tile, rather than
+just rendering blocky, rendered nothing), which is worse than the placeholder it replaced.
+The base map can still be zoomed in by hand for street detail; past zoom 9 the radar overlay
+just stops updating rather than risk another silent blank.
+
+Since RainViewer's India coverage is capped this way, the "how to use it" panel also links
+out to two sources that don't have that limit: [IMD's own Doppler radar](https://mausam.imd.gov.in/imd_latest/contents/index_radar_animation.php)
+out of its Palam station (real ground-based reflectivity, far finer resolution, but a single
+static image refreshed every 10–15 minutes rather than an interactive layer — shown inline
+as a small thumbnail, cache-busted on the same cadence) and [FloodWatch Gurgaon](https://floodwatchgurgaon.in/),
+a citizen- and civic-body-sourced map of where waterlogging is actually being reported,
+sector by sector — the part rain totals alone can't tell you, since that depends on
+drainage as much as rainfall.
 
 ## Files
 
