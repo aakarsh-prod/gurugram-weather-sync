@@ -26,14 +26,20 @@ jobs:
         env:
           WEATHERUNION_KEY: ${{ secrets.WEATHERUNION_KEY }}
           GOOGLE_ROUTES_KEY: ${{ secrets.GOOGLE_ROUTES_KEY }}
+          TOMORROW_API_KEY: ${{ secrets.TOMORROW_API_KEY }}
         run: node scripts/sync.mjs
 
-      - name: Commit data.json if changed
+      - name: Commit data.json and radar tiles if changed
         run: |
           git config user.name "weather-sync-bot"
           git config user.email "actions@users.noreply.github.com"
-          if ! git diff --quiet -- data.json; then
-            git add data.json
+          git add data.json
+          # These two only exist once TOMORROW_API_KEY is configured -- add each individually
+          # (rather than in one `git add`) so a missing file can't abort the whole command and
+          # leave data.json unstaged too, which is exactly what happened in testing otherwise.
+          [ -f tomorrow-precipitationIntensity.png ] && git add tomorrow-precipitationIntensity.png
+          [ -f tomorrow-cloudCover.png ] && git add tomorrow-cloudCover.png
+          if ! git diff --cached --quiet; then
             git commit -m "Sync data $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             git push
           else
