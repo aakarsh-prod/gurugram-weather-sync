@@ -35,6 +35,15 @@ GitHub Actions (cron, every 30 min)
 baked-in snapshot so it never shows a blank page, then immediately overwrites that with
 live data from `data.json`.
 
+A repo `.nojekyll` file (empty, just needs to exist) tells GitHub Pages to publish the
+branch as-is instead of running it through Jekyll first. This isn't our `sync.yml` workflow
+— it's a separate, GitHub-managed "pages build and deployment" job that runs automatically
+whenever Pages is set to deploy from a branch, and it occasionally fails outright with a
+Docker-image-pull timeout pulling GitHub's own Jekyll build container (an infra hiccup on
+GitHub's side, unrelated to anything committed here — it typically succeeds on the next
+push). Since nothing here needs Jekyll's templating, `.nojekyll` skips that step — and its
+failure mode — entirely.
+
 ## Ongoing conditions (streak tracking)
 
 Since `sync.mjs` already polls every 30 minutes, it also keeps a small memory of its own
@@ -108,7 +117,7 @@ list every 10 minutes (skipping the refresh, not the fetch, while an animation h
 be mid-playback so it doesn't yank the frame out from under it), the same way `data.json`
 itself refreshes every 5.
 
-### Close-up view (Tomorrow.io)
+### Delhi NCR / Gurugram view (Tomorrow.io)
 
 RainViewer's zoom-7 cap for India means the live map is necessarily a *wide* view — it can
 show a storm sitting over Gurugram, but not much finer than "somewhere over the city."
@@ -116,12 +125,19 @@ show a storm sitting over Gurugram, but not much finer than "somewhere over the 
 blending five geostationary satellites' IR brightness temperature with forecast-model
 context and terrestrial microwave links, calibrated against ground radar via ML — built
 specifically to estimate rain in places (India among them) that don't share a raw radar
-feed. `sync.mjs` fetches one zoom-11 tile per field (`precipitationIntensity` and
-`cloudCover` — confirmed both corridor endpoints, DLF Phase 5 and the Leena.AI office, land
-in the *same* tile, so one tile per field is enough) each run and commits them alongside
-`data.json` as `tomorrow-precipitationIntensity.png` / `tomorrow-cloudCover.png`. The "Live
-radar" section shows them as a small close-up pair once they exist, timestamped from
-`data.json`'s `tomorrowRadar.time`.
+feed. `sync.mjs` fetches one tile per field (`precipitationIntensity` and `cloudCover`)
+each run and commits them alongside `data.json` as `tomorrow-precipitationIntensity.png` /
+`tomorrow-cloudCover.png`. The "Live radar" section shows them as a pair once they exist,
+timestamped from `data.json`'s `tomorrowRadar.time`.
+
+The tile is `z9/x365/y213` — roughly 28.27–28.92°N, 76.84–77.34°E, covering south/central
+Delhi, Gurugram, IGI airport, and the edges of Faridabad and Noida. This was originally a
+tight zoom-11 tile over just the DLF Phase 5 ↔ Leena.AI corridor, but that turned out to be
+*too* close: Tomorrow.io's satellite-blended fields carry real spatial resolution on the
+order of a few km, so a tile that small had nothing to show variation across and just
+rendered as one flat, uninformative color. Zooming out to z9 — the same level the RainViewer
+layer already caps itself at — gives an actual region with visible shape to it, at the cost
+of no longer isolating the exact commute corridor.
 
 This is deliberately a static snapshot, not an interactive layer like RainViewer's: the key
 is used server-side only (sent as an `apikey` header, never a URL query string, so it never
