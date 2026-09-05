@@ -119,13 +119,19 @@ async function fetchOpenMeteo() {
 // geostationary satellites' IR brightness temperature, forecast-model atmospheric context, and
 // terrestrial microwave links, calibrated against ground radar with ML where ground radar exists.
 // Free tier is thin (25 req/hour, 500/day) and two sync runs can land in the same clock hour, so
-// this fetches exactly ONE tile per field at zoom 11 -- comfortably covers the whole DLF Phase 5
-// <-> Leena.AI corridor in a single tile, confirmed by checking both endpoints' tile coordinates
-// land inside the same (x,y) -- rather than a multi-tile grid that would blow the hourly cap.
+// this fetches exactly ONE tile per field -- rather than a multi-tile grid that would blow the
+// hourly cap.
+// A zoom-11 tile (covering just the ~0.05 deg DLF Phase 5 <-> Leena.AI corridor) turned out to be
+// too close-up in practice: Tomorrow.io's satellite-blended fields have real spatial resolution on
+// the order of a few km, so a tile that small has no variation to show and just rendered as one
+// flat interpolated color -- not a picture of anything. Zoomed out to z9, which covers roughly
+// 28.27-28.92N, 76.84-77.34E (south/central Delhi, Gurugram, IGI airport, edges of Faridabad and
+// Noida) -- an actual Delhi NCR / Gurugram regional view, and the same zoom level the RainViewer
+// radar layer already caps itself at client-side, for a consistent level of detail across both.
 // Auth goes in a header, not the tile URL's query string, so the key never ends up in an Actions
 // log line or a committed file. A missing key or any fetch failure degrades silently: the section
 // just won't render client-side, same as when RainViewer itself is unreachable.
-const TOMORROW_TILE = { z: 11, x: 1462, y: 855 }; // covers 28.41-28.47N, 77.05-77.10E comfortably
+const TOMORROW_TILE = { z: 9, x: 365, y: 213 }; // Delhi NCR / Gurugram: ~28.27-28.92N, 76.84-77.34E
 const TOMORROW_FIELDS = ["precipitationIntensity", "cloudCover"];
 
 async function fetchTomorrowTile(field) {
