@@ -260,9 +260,12 @@
   .radar-tomorrow-row{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
   @media (max-width:640px){ .radar-tomorrow-row{grid-template-columns:1fr;} }
   .radar-tomorrow-tile{display:flex; flex-direction:column; gap:8px;}
-  .radar-tomorrow-tile img{width:100%; aspect-ratio:1; max-height:420px; border-radius:12px; border:1px solid var(--line); box-shadow:var(--shadow); object-fit:cover; background:var(--surface-2);}
+  .radar-tomorrow-maplet{width:100%; aspect-ratio:1; max-height:420px; border-radius:12px; border:1px solid var(--line); box-shadow:var(--shadow); background:var(--surface-2); overflow:hidden;}
+  .radar-tomorrow-maplet .leaflet-control-attribution{background:rgba(21,28,44,.7); color:var(--muted); font-size:9px;}
+  .radar-tomorrow-maplet .leaflet-control-attribution a{color:var(--rain);}
   .radar-tomorrow-tile .tt-label{font-size:12.5px; font-family:'JetBrains Mono',monospace; color:var(--muted); display:flex; justify-content:space-between; gap:6px;}
   .radar-tomorrow-tile .tt-label b{color:var(--ink); font-weight:600; font-size:13px;}
+  .radar-tomorrow-legend{font-size:11.5px; color:var(--muted); margin:0;}
 
   /* headline strip */
   .headline{
@@ -459,17 +462,18 @@
 
     <div class="radar-tomorrow" id="tomorrow-radar-block" hidden>
       <div class="subsection-label">Delhi NCR / Gurugram view (ours, every 30 min)</div>
-      <p class="radar-tomorrow-hint">Tomorrow.io's satellite-blended estimate across Delhi NCR and Gurugram &mdash; fetched by our own sync run, so it's a static snapshot rather than an animated layer, but it isn't capped at RainViewer's coarse India zoom. (An earlier version zoomed in on just the commute corridor; at that scale the underlying data has no real variation to show, so it just painted one flat color across the whole tile &mdash; this wider view actually shows a shape.)</p>
+      <p class="radar-tomorrow-hint">Tomorrow.io's satellite-blended estimate across Delhi NCR and Gurugram, drawn on the same dark basemap as the radar above so it's actually placed on a map instead of a bare color swatch &mdash; fetched by our own sync run, so it's a static snapshot rather than an animated layer, but it isn't capped at RainViewer's coarse India zoom. Color is Tomorrow.io's own scale, unpublished by them in detail; a solid block covering the whole view during an active storm can be genuinely correct (compare against the live radar above and the IMD thumbnail below), not necessarily a rendering problem.</p>
       <div class="radar-tomorrow-row">
         <div class="radar-tomorrow-tile">
-          <img id="tt-precip" alt="Tomorrow.io precipitation intensity over Delhi NCR and Gurugram">
+          <div class="radar-tomorrow-maplet" id="tt-precip-map" role="img" aria-label="Tomorrow.io precipitation intensity over Delhi NCR and Gurugram"></div>
           <div class="tt-label"><b>Precipitation</b><span id="tt-time-precip"></span></div>
         </div>
         <div class="radar-tomorrow-tile">
-          <img id="tt-cloud" alt="Tomorrow.io cloud cover over Delhi NCR and Gurugram">
+          <div class="radar-tomorrow-maplet" id="tt-cloud-map" role="img" aria-label="Tomorrow.io cloud cover over Delhi NCR and Gurugram"></div>
           <div class="tt-label"><b>Cloud cover</b><span id="tt-time-cloud"></span></div>
         </div>
       </div>
+      <p class="radar-tomorrow-legend">Higher-contrast color / more opaque fill = more intense in that field; grey-blue base map underneath is only for orientation (city names, roads), not part of the data.</p>
     </div>
   </section>
 
@@ -767,6 +771,50 @@ function renderConditions(conditions, stations){
 // carries a tomorrowRadar entry, which only happens once TOMORROW_API_KEY is configured as a
 // repo secret and a sync run has fetched successfully at least once. Absent that, the whole
 // block stays hidden rather than showing broken images.
+// Exact lat/lon bounds of the single z9/x365/y213 tile scripts/sync.mjs fetches -- keep this
+// in sync with TOMORROW_TILE there by hand if that ever changes. Drawing the PNG as an
+// L.imageOverlay on the same dark basemap (with its labels layer) as the radar map above is
+// what makes a flat-looking tile legible: without city names/roads under it, there's no way
+// to tell what a solid color block is even covering.
+const TOMORROW_BOUNDS = [[28.304381, 76.640625], [28.921631, 77.343750]];
+let tomorrowMaps = null;
+
+function ensureTomorrowMaps(){
+  if(tomorrowMaps) return tomorrowMaps;
+  if(typeof L === "undefined") return null;
+  const mk = (id) => {
+    const el = document.getElementById(id);
+    if(!el) return null;
+    const map = L.map(el, {
+      zoomControl:false, dragging:false, scrollWheelZoom:false, doubleClickZoom:false,
+      boxZoom:false, keyboard:false, tap:false, touchZoom:false
+    });
+    map.fitBounds(TOMORROW_BOUNDS);
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom:16, attribution:'&copy; <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>'
+    }).addTo(map);
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom:16
+    }).addTo(map);
+    return { map, overlay:null };
+  };
+  const precip = mk("tt-precip-map");
+  const cloud = mk("tt-cloud-map");
+  if(!precip || !cloud) return null;
+  tomorrowMaps = { precip, cloud };
+  return tomorrowMaps;
+}
+
+function setTomorrowOverlay(entry, url){
+  if(!entry) return;
+  entry.map.invalidateSize();
+  if(entry.overlay){
+    entry.overlay.setUrl(url);
+  } else {
+    entry.overlay = L.imageOverlay(url, TOMORROW_BOUNDS, { opacity:.7 }).addTo(entry.map);
+  }
+}
+
 function renderTomorrowRadar(tomorrowRadar){
   const block = document.getElementById("tomorrow-radar-block");
   if(!block) return;
@@ -775,25 +823,25 @@ function renderTomorrowRadar(tomorrowRadar){
     return;
   }
   block.hidden = false;
+  const maps = ensureTomorrowMaps();
+  if(!maps) return; // Leaflet not loaded (e.g. offline) -- section stays hidden rather than showing broken tiles
   const stamp = new Date(tomorrowRadar.time);
   const timeText = isNaN(stamp) ? "" : stamp.toLocaleTimeString("en-IN", {hour:"2-digit", minute:"2-digit", hour12:true, timeZone:"Asia/Kolkata"});
   const cacheBust = "?_=" + encodeURIComponent(tomorrowRadar.time || Date.now());
 
-  const precipImg = document.getElementById("tt-precip");
-  const precipTile = precipImg ? precipImg.closest(".radar-tomorrow-tile") : null;
+  const precipTile = document.getElementById("tt-precip-map").closest(".radar-tomorrow-tile");
   if(tomorrowRadar.fields.precipitationIntensity){
     if(precipTile) precipTile.style.display = "";
-    if(precipImg) precipImg.src = "./tomorrow-precipitationIntensity.png" + cacheBust;
+    setTomorrowOverlay(maps.precip, "./tomorrow-precipitationIntensity.png" + cacheBust);
     const t = document.getElementById("tt-time-precip"); if(t) t.textContent = timeText;
   } else if(precipTile){
     precipTile.style.display = "none";
   }
 
-  const cloudImg = document.getElementById("tt-cloud");
-  const cloudTile = cloudImg ? cloudImg.closest(".radar-tomorrow-tile") : null;
+  const cloudTile = document.getElementById("tt-cloud-map").closest(".radar-tomorrow-tile");
   if(tomorrowRadar.fields.cloudCover){
     if(cloudTile) cloudTile.style.display = "";
-    if(cloudImg) cloudImg.src = "./tomorrow-cloudCover.png" + cacheBust;
+    setTomorrowOverlay(maps.cloud, "./tomorrow-cloudCover.png" + cacheBust);
     const t = document.getElementById("tt-time-cloud"); if(t) t.textContent = timeText;
   } else if(cloudTile){
     cloudTile.style.display = "none";
