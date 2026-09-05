@@ -34,11 +34,17 @@ jobs:
           git config user.name "weather-sync-bot"
           git config user.email "actions@users.noreply.github.com"
           git add data.json
-          # These two only exist once TOMORROW_API_KEY is configured -- add each individually
+          # These only exist once TOMORROW_API_KEY is configured -- add each individually
           # (rather than in one `git add`) so a missing file can't abort the whole command and
           # leave data.json unstaged too, which is exactly what happened in testing otherwise.
-          [ -f tomorrow-precipitationIntensity.png ] && git add tomorrow-precipitationIntensity.png
-          [ -f tomorrow-cloudCover.png ] && git add tomorrow-cloudCover.png
+          # 2-tile mosaic (zoom 6, x45/y26 north half + x45/y27 south half) x 2 fields:
+          [ -f tomorrow-precipitationIntensity-6-45-26.png ] && git add tomorrow-precipitationIntensity-6-45-26.png
+          [ -f tomorrow-precipitationIntensity-6-45-27.png ] && git add tomorrow-precipitationIntensity-6-45-27.png
+          [ -f tomorrow-cloudCover-6-45-26.png ] && git add tomorrow-cloudCover-6-45-26.png
+          [ -f tomorrow-cloudCover-6-45-27.png ] && git add tomorrow-cloudCover-6-45-27.png
+          # Retire the old single-tile files from the previous (pre-mosaic) layout, if present.
+          [ -f tomorrow-precipitationIntensity.png ] && git rm --ignore-unmatch tomorrow-precipitationIntensity.png
+          [ -f tomorrow-cloudCover.png ] && git rm --ignore-unmatch tomorrow-cloudCover.png
           if ! git diff --cached --quiet; then
             git commit -m "Sync data $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             git push
