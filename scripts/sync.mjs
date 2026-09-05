@@ -119,26 +119,38 @@ async function fetchOpenMeteo() {
 // geostationary satellites' IR brightness temperature, forecast-model atmospheric context, and
 // terrestrial microwave links, calibrated against ground radar with ML where ground radar exists.
 // Free tier is thin (25 req/hour, 500/day) and two sync runs can land in the same clock hour, so
-// this fetches exactly ONE tile per field -- rather than a multi-tile grid that would blow the
-// hourly cap.
-// A zoom-11 tile (covering just the ~0.05 deg DLF Phase 5 <-> Leena.AI corridor) turned out to be
-// too close-up in practice: Tomorrow.io's satellite-blended fields have real spatial resolution on
-// the order of a few km, so a tile that small has no variation to show and just rendered as one
-// flat interpolated color -- not a picture of anything. Zoomed out to z9, which covers roughly
-// 28.27-28.92N, 76.84-77.34E (south/central Delhi, Gurugram, IGI airport, edges of Faridabad and
-// Noida) -- an actual Delhi NCR / Gurugram regional view, and the same zoom level the RainViewer
-// radar layer already caps itself at client-side, for a consistent level of detail across both.
+// the grid below is sized to stay well under that even at our 30-min cadence.
+//
+// History: a single zoom-11 tile (just the DLF Phase 5 <-> Leena.AI corridor) was too close-up --
+// Tomorrow.io's satellite-blended fields have real spatial resolution on the order of a few km, so
+// a tile that small had nothing to show variation across and just rendered as one flat color. A
+// single zoom-9 tile (just Delhi NCR core) fixed that but was still a small, oddly-cropped view.
+// This is a small fixed MOSAIC instead: 2 tiles at zoom 6, stacked vertically, covering roughly
+// 21.9-32.0N, 73.1-78.75E -- all of Haryana, Delhi NCR, Chandigarh, southern Punjab, western UP,
+// and northern Rajasthan. At z6 that's ~2.5 km/pixel: coarser than the old single close-up tile,
+// but a real region with real shape to it, not a flat swatch. 2 tiles x 2 fields = 4 requests/run,
+// 8/hour at the existing 30-min cadence -- nowhere near the 25/hour cap, so no extra throttling
+// needed (unlike whole-India coverage, which would need ~6-140+ tiles depending on zoom and would
+// have to drop to an hourly cadence to stay safe).
 // Auth goes in a header, not the tile URL's query string, so the key never ends up in an Actions
-// log line or a committed file. A missing key or any fetch failure degrades silently: the section
-// just won't render client-side, same as when RainViewer itself is unreachable.
-const TOMORROW_TILE = { z: 9, x: 365, y: 213 }; // Delhi NCR / Gurugram: ~28.27-28.92N, 76.84-77.34E
+// log line or a committed file. A missing key or any fetch failure degrades silently, per-tile: a
+// tile that fails to fetch just doesn't get committed/updated, same as when RainViewer itself is
+// unreachable, rather than taking down the whole mosaic.
+const TOMORROW_ZOOM = 6;
+const TOMORROW_TILES = [
+  { x: 45, y: 26 }, // north half: ~27.06-31.95N, 73.13-78.75E
+  { x: 45, y: 27 }, // south half: ~21.94-27.06N, 73.13-78.75E
+];
 const TOMORROW_FIELDS = ["precipitationIntensity", "cloudCover"];
 
-async function fetchTomorrowTile(field) {
-  const { z, x, y } = TOMORROW_TILE;
-  const url = `https://api.tomorrow.io/v4/map/tile/${z}/${x}/${y}/${field}/now.png`;
+function tomorrowTileFilename(field, x, y) {
+  return `tomorrow-${field}-${TOMORROW_ZOOM}-${x}-${y}.png`;
+}
+
+async function fetchTomorrowTile(field, x, y) {
+  const url = `https://api.tomorrow.io/v4/map/tile/${TOMORROW_ZOOM}/${x}/${y}/${field}/now.png`;
   const res = await fetch(url, { headers: { apikey: TOMORROW_API_KEY } });
-  if (!res.ok) throw new Error(`tomorrow.io ${field} tile: HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`tomorrow.io ${field} tile ${x},${y}: HTTP ${res.status}`);
   return Buffer.from(await res.arrayBuffer());
 }
 
@@ -147,16 +159,19 @@ async function fetchTomorrowRadar() {
   const nowIso = new Date().toISOString();
   const fields = {};
   for (const field of TOMORROW_FIELDS) {
-    try {
-      const png = await fetchTomorrowTile(field);
-      await fs.writeFile(`tomorrow-${field}.png`, png);
-      fields[field] = true;
-    } catch (e) {
-      console.warn(`tomorrow.io ${field} fetch failed:`, e.message);
-      fields[field] = false;
+    let allOk = true;
+    for (const { x, y } of TOMORROW_TILES) {
+      try {
+        const png = await fetchTomorrowTile(field, x, y);
+        await fs.writeFile(tomorrowTileFilename(field, x, y), png);
+      } catch (e) {
+        console.warn(`tomorrow.io ${field} tile ${x},${y} fetch failed:`, e.message);
+        allOk = false;
+      }
     }
+    fields[field] = allOk;
   }
-  return { time: nowIso, zoom: TOMORROW_TILE.z, fields };
+  return { time: nowIso, zoom: TOMORROW_ZOOM, tiles: TOMORROW_TILES, fields };
 }
 
 const ROUTE_DEFS = {
