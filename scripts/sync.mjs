@@ -6,6 +6,7 @@ import fs from "node:fs/promises";
 
 const WEATHERUNION_KEY = process.env.WEATHERUNION_KEY;
 const GOOGLE_ROUTES_KEY = process.env.GOOGLE_ROUTES_KEY;
+const TOMORROW_API_KEY = process.env.TOMORROW_API_KEY;
 const DATA_PATH = "data.json";
 
 const IST_OFFSET_MS = 5.5 * 60 * 60000;
@@ -111,6 +112,45 @@ async function fetchOpenMeteo() {
     current: { time: j.current.time, temp: j.current.temperature_2m, humidity: j.current.relative_humidity_2m, precip: j.current.precipitation, pressure: j.current.pressure_msl, wind_speed: j.current.wind_speed_10m, wind_dir: j.current.wind_direction_10m, code: j.current.weather_code },
     hourly, daily,
   };
+}
+
+// Tomorrow.io's map-tile API (https://docs.tomorrow.io/reference/get-map-tile) covers India at
+// native zoom up to 12 -- real headroom over RainViewer's zoom-7 cap here -- by blending 5
+// geostationary satellites' IR brightness temperature, forecast-model atmospheric context, and
+// terrestrial microwave links, calibrated against ground radar with ML where ground radar exists.
+// Free tier is thin (25 req/hour, 500/day) and two sync runs can land in the same clock hour, so
+// this fetches exactly ONE tile per field at zoom 11 -- comfortably covers the whole DLF Phase 5
+// <-> Leena.AI corridor in a single tile, confirmed by checking both endpoints' tile coordinates
+// land inside the same (x,y) -- rather than a multi-tile grid that would blow the hourly cap.
+// Auth goes in a header, not the tile URL's query string, so the key never ends up in an Actions
+// log line or a committed file. A missing key or any fetch failure degrades silently: the section
+// just won't render client-side, same as when RainViewer itself is unreachable.
+const TOMORROW_TILE = { z: 11, x: 1462, y: 855 }; // covers 28.41-28.47N, 77.05-77.10E comfortably
+const TOMORROW_FIELDS = ["precipitationIntensity", "cloudCover"];
+
+async function fetchTomorrowTile(field) {
+  const { z, x, y } = TOMORROW_TILE;
+  const url = `https://api.tomorrow.io/v4/map/tile/${z}/${x}/${y}/${field}/now.png`;
+  const res = await fetch(url, { headers: { apikey: TOMORROW_API_KEY } });
+  if (!res.ok) throw new Error(`tomorrow.io ${field} tile: HTTP ${res.status}`);
+  return Buffer.from(await res.arrayBuffer());
+}
+
+async function fetchTomorrowRadar() {
+  if (!TOMORROW_API_KEY) return null;
+  const nowIso = new Date().toISOString();
+  const fields = {};
+  for (const field of TOMORROW_FIELDS) {
+    try {
+      const png = await fetchTomorrowTile(field);
+      await fs.writeFile(`tomorrow-${field}.png`, png);
+      fields[field] = true;
+    } catch (e) {
+      console.warn(`tomorrow.io ${field} fetch failed:`, e.message);
+      fields[field] = false;
+    }
+  }
+  return { time: nowIso, zoom: TOMORROW_TILE.z, fields };
 }
 
 const ROUTE_DEFS = {
@@ -296,6 +336,7 @@ async function main() {
   const stations = await Promise.all(STATIONS_META.map(fetchWeatherUnion));
   const om = await fetchOpenMeteo();
   const conditions = computeConditions(prev.conditions, stations, om, new Date().toISOString());
+  const tomorrowRadar = await fetchTomorrowRadar();
 
   const date = istDate();
   const weekday = istWeekdayName();
@@ -387,10 +428,11 @@ async function main() {
     departurePlanToday,
     departurePlanMorning,
     gmapsUsage: { month: curMonth, calls: gmapsCalls, budget: GMAPS_MONTHLY_BUDGET },
+    tomorrowRadar,
   };
 
   await fs.writeFile(DATA_PATH, JSON.stringify(out, null, 2) + "\n");
-  console.log(`Synced ${stations.length} stations, weekday=${weekday}, traffic=${!!traffic}, eveningPlan=${!!(departurePlanToday && departurePlanToday.date === date)}, morningPlan=${!!(departurePlanMorning && departurePlanMorning.date === date)}, gmapsCalls=${gmapsCalls}/${GMAPS_MONTHLY_BUDGET}${gmapsSkipped ? " (budget-limited this run)" : ""}`);
+  console.log(`Synced ${stations.length} stations, weekday=${weekday}, traffic=${!!traffic}, eveningPlan=${!!(departurePlanToday && departurePlanToday.date === date)}, morningPlan=${!!(departurePlanMorning && departurePlanMorning.date === date)}, gmapsCalls=${gmapsCalls}/${GMAPS_MONTHLY_BUDGET}${gmapsSkipped ? " (budget-limited this run)" : ""}, tomorrowRadar=${tomorrowRadar ? "ok" : "skipped (no key)"}`);
 }
 
 main().catch(e => {
