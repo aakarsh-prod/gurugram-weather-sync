@@ -117,7 +117,7 @@ list every 10 minutes (skipping the refresh, not the fetch, while an animation h
 be mid-playback so it doesn't yank the frame out from under it), the same way `data.json`
 itself refreshes every 5.
 
-### Delhi NCR / Gurugram view (Tomorrow.io)
+### Haryana & Delhi NCR view (Tomorrow.io)
 
 RainViewer's zoom-7 cap for India means the live map is necessarily a *wide* view — it can
 show a storm sitting over Gurugram, but not much finer than "somewhere over the city."
@@ -125,27 +125,51 @@ show a storm sitting over Gurugram, but not much finer than "somewhere over the 
 blending five geostationary satellites' IR brightness temperature with forecast-model
 context and terrestrial microwave links, calibrated against ground radar via ML — built
 specifically to estimate rain in places (India among them) that don't share a raw radar
-feed. `sync.mjs` fetches one tile per field (`precipitationIntensity` and `cloudCover`)
-each run and commits them alongside `data.json` as `tomorrow-precipitationIntensity.png` /
-`tomorrow-cloudCover.png`. The "Live radar" section shows them as a pair once they exist,
-timestamped from `data.json`'s `tomorrowRadar.time`.
+feed. `sync.mjs` fetches a small fixed **mosaic** — 2 tiles at zoom 6, stacked vertically —
+per field (`precipitationIntensity` and `cloudCover`) each run and commits them alongside
+`data.json` as `tomorrow-{field}-6-45-26.png` (north half) and `tomorrow-{field}-6-45-27.png`
+(south half). The "Live radar" section shows the stitched pair once they exist, timestamped
+from `data.json`'s `tomorrowRadar.time`.
 
-The tile is `z9/x365/y213` — roughly 28.27–28.92°N, 76.84–77.34°E, covering south/central
-Delhi, Gurugram, IGI airport, and the edges of Faridabad and Noida. This was originally a
-tight zoom-11 tile over just the DLF Phase 5 ↔ Leena.AI corridor, but that turned out to be
-*too* close: Tomorrow.io's satellite-blended fields carry real spatial resolution on the
-order of a few km, so a tile that small had nothing to show variation across and just
-rendered as one flat, uninformative color. Zooming out to z9 — the same level the RainViewer
-layer already caps itself at — gives an actual region with visible shape to it, at the cost
-of no longer isolating the exact commute corridor.
+The mosaic covers roughly 21.9–32.0°N, 73.1–78.75°E — all of Haryana, Delhi NCR, Chandigarh,
+southern Punjab, western UP, and northern Rajasthan — at about 2.5 km/pixel. This went
+through two narrower iterations first: a tight zoom-11 tile over just the DLF Phase 5 ↔
+Leena.AI corridor turned out to be *too* close — Tomorrow.io's satellite-blended fields carry
+real spatial resolution on the order of a few km, so a tile that small had nothing to show
+variation across and just rendered as one flat, uninformative color. A single zoom-9 tile
+(just the Delhi NCR core) fixed that but was still a small, arbitrarily-cropped view rather
+than a real region. Going wider still to cover all of India in one shot doesn't work well
+either: India straddles the fixed 90°E tile boundary at every zoom up to z1/z2, so a single
+tile only fully contains it at z1 — by which point the whole tile is just 256×256 px for
+*half the globe*, making India's slice of it only ~40×45 px (worse than any of the above).
+Real all-India coverage would need a much larger tile grid (roughly 6 tiles at z6 up to 140+
+at z7) and would have to drop to an hourly cadence to stay under the API's rate limit (below)
+— a bigger change than this project's Haryana/NCR scope called for.
 
-This is deliberately a static snapshot, not an interactive layer like RainViewer's: the key
-is used server-side only (sent as an `apikey` header, never a URL query string, so it never
-ends up in an Actions log or a committed file), and the free tier's real constraint is the
-**25-requests/hour** cap, not the 500/day one — two sync runs can land in the same clock
-hour, so this stays at 2 requests/run (4/hour at worst) rather than the dozens a multi-tile
-animated grid would need. Set it up by creating a free account at
-[tomorrow.io](https://www.tomorrow.io/weather-api/) and adding the key as a repo secret
+A bare PNG swatch by itself is close to unreadable regardless of zoom — no coastline, no
+city names, nothing to anchor a solid color block to a place, and during an actively wide
+storm a whole tile actually can be one flat color legitimately (not a bug). So instead of an
+`<img>`, `index.html` draws each mosaic tile as its own `L.imageOverlay`, at its own precise
+bounds, on a small Leaflet map using the same Esri World Dark Gray base + label layers as the
+live radar map above — so city names and roads sit under the color, a uniform block can
+actually be checked against the live radar/IMD thumbnail rather than just stared at, and
+(unlike an early version of this) it's fully pannable/zoomable rather than locked in place.
+Zooming in past the mosaic's native ~2.5 km/pixel just enlarges its pixels rather than
+revealing finer detail, since it's a fixed-resolution image, not a live tile source — but the
+basemap underneath keeps its own full resolution for orientation. Tomorrow.io doesn't publish
+an exact value-to-color legend for these tiles, so reading them is relative (darker/more
+saturated = more intense) rather than absolute.
+
+The key is used server-side only (sent as an `apikey` header, never a URL query string, so
+it never ends up in an Actions log or a committed file, and never reaches a visitor's
+browser) — this is also why the map can't be a truly *live*, freely-zoomable tile layer like
+RainViewer's: doing that would mean either putting the key in a URL every visitor's browser
+calls directly, or sending it from client-side JS, and either way it stops being a secret the
+moment it's used client-side. The free tier's real constraint is the **25-requests/hour**
+cap, not the 500/day one — two sync runs can land in the same clock hour, so this mosaic
+stays at 2 tiles × 2 fields = 4 requests/run (8/hour at worst), comfortably under the cap at
+the existing 30-min cadence, unlike a wider grid or a live layer would be. Set it up by
+creating a free account at [tomorrow.io](https://www.tomorrow.io/weather-api/) and adding the key as a repo secret
 named `TOMORROW_API_KEY` (same place as the two secrets below) — everything degrades
 gracefully without it: `sync.mjs` just skips the fetch and the section stays hidden.
 
@@ -156,7 +180,7 @@ gracefully without it: `sync.mjs` just skips the fetch and the section stays hid
 | `index.html` | The dashboard itself — all HTML/CSS/JS in one file |
 | `data.json` | The current live data, rewritten every ~30 min by the Action |
 | `scripts/sync.mjs` | Node script that fetches the APIs and writes `data.json` (and the two Tomorrow.io tiles below, if configured) |
-| `tomorrow-precipitationIntensity.png`, `tomorrow-cloudCover.png` | Close-up radar/cloud snapshots for the commute corridor, rewritten every ~30 min alongside `data.json` (only if `TOMORROW_API_KEY` is set) |
+| `tomorrow-{precipitationIntensity,cloudCover}-6-45-{26,27}.png` | 2-tile Haryana/Delhi NCR mosaic (4 files total), rewritten every ~30 min alongside `data.json` (only if `TOMORROW_API_KEY` is set) |
 | `.github/workflows/sync.yml` | The scheduled GitHub Actions workflow |
 | `gurugram-widget.js` | A Scriptable script for an iPad/iPhone home-screen widget (see below) |
 
