@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-14T20:39:01.611Z",
+  "generatedAt": "2026-09-14T21:08:20.807Z",
   "historyStart": "2026-09-04T14:22:11.943638Z",
   "weekday": "Tuesday",
   "stations": [
@@ -12,14 +12,14 @@
         "return-subhash",
         "return-ext"
       ],
-      "temperature": 27.36,
-      "humidity": 84.95,
-      "wind_speed": 0.432,
-      "wind_dir": "SW",
+      "temperature": 27.31,
+      "humidity": 85.33,
+      "wind_speed": 0,
+      "wind_dir": "S",
       "rain_intensity": 0,
       "rain_accumulation": 0,
-      "pm10": 1,
-      "pm25": 1,
+      "pm10": 0,
+      "pm25": 0,
       "status": "ok"
     },
     {
@@ -30,10 +30,10 @@
         "forward",
         "return-subhash"
       ],
-      "temperature": 29.1,
-      "humidity": 81.89,
-      "wind_speed": 2.628,
-      "wind_dir": "WSW",
+      "temperature": 28.98,
+      "humidity": 82.25,
+      "wind_speed": 3.132,
+      "wind_dir": "W",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -49,10 +49,10 @@
         "return-subhash",
         "return-ext"
       ],
-      "temperature": 28.45,
-      "humidity": 83.08,
-      "wind_speed": 0.648,
-      "wind_dir": "SE",
+      "temperature": 28.28,
+      "humidity": 83.89,
+      "wind_speed": 2.4480000000000004,
+      "wind_dir": "SSW",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -67,10 +67,10 @@
         "forward",
         "return-ext"
       ],
-      "temperature": 28.59,
-      "humidity": 79.75,
-      "wind_speed": 2.3040000000000003,
-      "wind_dir": "SE",
+      "temperature": 28.55,
+      "humidity": 80.54,
+      "wind_speed": 3.42,
+      "wind_dir": "E",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -84,10 +84,10 @@
       "routes": [
         "return-ext"
       ],
-      "temperature": 27.5,
-      "humidity": 84.14,
-      "wind_speed": 2.52,
-      "wind_dir": "NNE",
+      "temperature": 27.21,
+      "humidity": 84.89,
+      "wind_speed": 0.396,
+      "wind_dir": "N",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -102,10 +102,10 @@
         "forward",
         "return-ext"
       ],
-      "temperature": 28.45,
-      "humidity": 83.08,
-      "wind_speed": 0.648,
-      "wind_dir": "SE",
+      "temperature": 28.28,
+      "humidity": 83.89,
+      "wind_speed": 2.4480000000000004,
+      "wind_dir": "SSW",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -117,10 +117,10 @@
       "name": "Sector 15, Gurugram",
       "tag": "Part II",
       "routes": [],
-      "temperature": 29.15,
-      "humidity": 87.8,
-      "wind_speed": 2.8800000000000003,
-      "wind_dir": "WSW",
+      "temperature": 28.88,
+      "humidity": 89,
+      "wind_speed": 3.096,
+      "wind_dir": "SW",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -132,9 +132,9 @@
       "name": "Sector 52, Gurugram",
       "tag": "Nirvana Country",
       "routes": [],
-      "temperature": 28.06,
-      "humidity": 87.8,
-      "wind_speed": 4.356,
+      "temperature": 27.96,
+      "humidity": 88.83,
+      "wind_speed": 3.9600000000000004,
       "wind_dir": "ESE",
       "rain_intensity": 0,
       "rain_accumulation": 0,
@@ -192,13 +192,13 @@
     "lat": 28.4595,
     "lon": 77.0266,
     "current": {
-      "time": "2026-09-15T02:00",
+      "time": "2026-09-15T02:30",
       "temp": 25.5,
       "humidity": 93,
       "precip": 0,
-      "pressure": 1009.9,
-      "wind_speed": 12.1,
-      "wind_dir": 97,
+      "pressure": 1009.8,
+      "wind_speed": 11.9,
+      "wind_dir": 105,
       "code": 0
     },
     "hourly": [
@@ -383,8 +383,8 @@
           "since": "2026-09-12T08:39:12.813Z"
         },
         "humidity": {
-          "state": "humid",
-          "since": "2026-09-14T01:38:26.545Z"
+          "state": "very-humid",
+          "since": "2026-09-14T21:08:20.192Z"
         }
       },
       "sector-54": {
@@ -646,7 +646,7 @@
     "budget": 4500
   },
   "tomorrowRadar": {
-    "time": "2026-09-14T20:39:01.017Z",
+    "time": "2026-09-14T21:08:20.193Z",
     "zoom": 6,
     "tiles": [
       {
