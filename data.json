@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T22:08:02.971Z",
+  "generatedAt": "2026-09-16T22:38:25.777Z",
   "historyStart": "2026-09-04T14:22:11.943638Z",
   "weekday": "Thursday",
   "stations": [
@@ -12,10 +12,10 @@
         "return-subhash",
         "return-ext"
       ],
-      "temperature": 30,
-      "humidity": 75.68,
-      "wind_speed": 2.7,
-      "wind_dir": "SW",
+      "temperature": 29.49,
+      "humidity": 75.27,
+      "wind_speed": 1.8,
+      "wind_dir": "E",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": 0,
@@ -30,10 +30,10 @@
         "forward",
         "return-subhash"
       ],
-      "temperature": 30.6,
-      "humidity": 71.84,
-      "wind_speed": 0.8280000000000001,
-      "wind_dir": "W",
+      "temperature": 30.37,
+      "humidity": 69.93,
+      "wind_speed": 3.06,
+      "wind_dir": "WSW",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -49,10 +49,10 @@
         "return-subhash",
         "return-ext"
       ],
-      "temperature": 30,
-      "humidity": 76.05,
-      "wind_speed": 0.9720000000000001,
-      "wind_dir": "NNW",
+      "temperature": 29.71,
+      "humidity": 72.94,
+      "wind_speed": 1.548,
+      "wind_dir": "S",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -67,10 +67,10 @@
         "forward",
         "return-ext"
       ],
-      "temperature": 30.29,
-      "humidity": 73.81,
-      "wind_speed": 1.4040000000000001,
-      "wind_dir": "SSE",
+      "temperature": 30.08,
+      "humidity": 72.45,
+      "wind_speed": 0.108,
+      "wind_dir": "NNW",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -84,10 +84,10 @@
       "routes": [
         "return-ext"
       ],
-      "temperature": 28.91,
-      "humidity": 76.89,
-      "wind_speed": 7.092,
-      "wind_dir": "SE",
+      "temperature": 28.53,
+      "humidity": 74.42,
+      "wind_speed": 7.2,
+      "wind_dir": "SSE",
       "rain_intensity": 0,
       "rain_accumulation": 0.4,
       "pm10": null,
@@ -102,10 +102,10 @@
         "forward",
         "return-ext"
       ],
-      "temperature": 30,
-      "humidity": 76.05,
-      "wind_speed": 0.9720000000000001,
-      "wind_dir": "NNW",
+      "temperature": 29.71,
+      "humidity": 72.94,
+      "wind_speed": 1.548,
+      "wind_dir": "S",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -117,9 +117,9 @@
       "name": "Sector 15, Gurugram",
       "tag": "Part II",
       "routes": [],
-      "temperature": 30.09,
-      "humidity": 80.25,
-      "wind_speed": 5.508,
+      "temperature": 29.98,
+      "humidity": 73.6,
+      "wind_speed": 4.716,
       "wind_dir": "N",
       "rain_intensity": 0,
       "rain_accumulation": 0,
@@ -132,10 +132,10 @@
       "name": "Sector 52, Gurugram",
       "tag": "Nirvana Country",
       "routes": [],
-      "temperature": 30.28,
-      "humidity": 75.19,
-      "wind_speed": 4.896000000000001,
-      "wind_dir": "SSW",
+      "temperature": 30.05,
+      "humidity": 73.44,
+      "wind_speed": 2.3040000000000003,
+      "wind_dir": "WSW",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -177,10 +177,10 @@
       "name": "Sector 47, Gurugram",
       "tag": "Sohna Road",
       "routes": [],
-      "temperature": 30.08,
-      "humidity": 77.11,
-      "wind_speed": 0,
-      "wind_dir": "E",
+      "temperature": 29.97,
+      "humidity": 73.74,
+      "wind_speed": 0.5760000000000001,
+      "wind_dir": "NNW",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -192,22 +192,16 @@
     "lat": 28.4595,
     "lon": 77.0266,
     "current": {
-      "time": "2026-09-17T03:30",
-      "temp": 27,
-      "humidity": 82,
+      "time": "2026-09-17T04:00",
+      "temp": 26.8,
+      "humidity": 83,
       "precip": 0,
       "pressure": 1005.6,
-      "wind_speed": 7,
-      "wind_dir": 148,
+      "wind_speed": 6.8,
+      "wind_dir": 143,
       "code": 0
     },
     "hourly": [
-      {
-        "t": "03:00",
-        "temp": 27,
-        "pop": 3,
-        "code": 0
-      },
       {
         "t": "04:00",
         "temp": 26.6,
@@ -243,6 +237,12 @@
         "temp": 30,
         "pop": 63,
         "code": 2
+      },
+      {
+        "t": "10:00",
+        "temp": 26.1,
+        "pop": 63,
+        "code": 80
       }
     ],
     "daily": [
@@ -449,8 +449,8 @@
           "since": "2026-09-16T12:11:02.871Z"
         },
         "humidity": {
-          "state": "very-humid",
-          "since": "2026-09-16T22:08:02.206Z"
+          "state": "humid",
+          "since": "2026-09-16T22:38:25.311Z"
         }
       },
       "sector-52": {
@@ -619,7 +619,7 @@
     "budget": 4500
   },
   "tomorrowRadar": {
-    "time": "2026-09-16T22:08:02.206Z",
+    "time": "2026-09-16T22:38:25.311Z",
     "zoom": 6,
     "tiles": [
       {
