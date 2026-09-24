@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-24T13:09:40.776Z",
+  "generatedAt": "2026-09-24T13:41:44.936Z",
   "historyStart": "2026-09-04T14:22:11.943638Z",
   "weekday": "Thursday",
   "stations": [
@@ -12,14 +12,14 @@
         "return-subhash",
         "return-ext"
       ],
-      "temperature": 28.32,
-      "humidity": 78.07,
+      "temperature": 27.62,
+      "humidity": 78.68,
       "wind_speed": 0,
-      "wind_dir": "NNE",
+      "wind_dir": "N",
       "rain_intensity": 0,
       "rain_accumulation": 0,
-      "pm10": 0,
-      "pm25": 0,
+      "pm10": 3,
+      "pm25": 3,
       "status": "ok"
     },
     {
@@ -30,10 +30,10 @@
         "forward",
         "return-subhash"
       ],
-      "temperature": 32.95,
-      "humidity": 58.65,
-      "wind_speed": 1.548,
-      "wind_dir": "W",
+      "temperature": 32.12,
+      "humidity": 62.06,
+      "wind_speed": 1.764,
+      "wind_dir": "WSW",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -49,10 +49,10 @@
         "return-subhash",
         "return-ext"
       ],
-      "temperature": 31.6,
-      "humidity": 63.76,
-      "wind_speed": 1.4400000000000002,
-      "wind_dir": "SE",
+      "temperature": 31.34,
+      "humidity": 66.5,
+      "wind_speed": 1.296,
+      "wind_dir": "N",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -67,10 +67,10 @@
         "forward",
         "return-ext"
       ],
-      "temperature": 32.39,
-      "humidity": 61.3,
-      "wind_speed": 1.872,
-      "wind_dir": "SSE",
+      "temperature": 31.95,
+      "humidity": 63.42,
+      "wind_speed": 2.4480000000000004,
+      "wind_dir": "ESE",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -84,10 +84,10 @@
       "routes": [
         "return-ext"
       ],
-      "temperature": 32.31,
-      "humidity": 60.43,
-      "wind_speed": 1.9800000000000002,
-      "wind_dir": "E",
+      "temperature": 31.67,
+      "humidity": 63.68,
+      "wind_speed": 2.124,
+      "wind_dir": "NNE",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -102,10 +102,10 @@
         "forward",
         "return-ext"
       ],
-      "temperature": 31.6,
-      "humidity": 63.76,
-      "wind_speed": 1.4400000000000002,
-      "wind_dir": "SE",
+      "temperature": 31.34,
+      "humidity": 66.5,
+      "wind_speed": 1.296,
+      "wind_dir": "N",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -117,10 +117,10 @@
       "name": "Sector 15, Gurugram",
       "tag": "Part II",
       "routes": [],
-      "temperature": 33,
-      "humidity": 64.09,
-      "wind_speed": 1.116,
-      "wind_dir": "W",
+      "temperature": 32.52,
+      "humidity": 65.37,
+      "wind_speed": 1.6560000000000001,
+      "wind_dir": "WSW",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -132,10 +132,10 @@
       "name": "Sector 52, Gurugram",
       "tag": "Nirvana Country",
       "routes": [],
-      "temperature": 31.97,
-      "humidity": 63.04,
-      "wind_speed": 1.1520000000000001,
-      "wind_dir": "S",
+      "temperature": 31.6,
+      "humidity": 65.01,
+      "wind_speed": 4.248,
+      "wind_dir": "ESE",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -177,10 +177,10 @@
       "name": "Sector 47, Gurugram",
       "tag": "Sohna Road",
       "routes": [],
-      "temperature": 32.24,
-      "humidity": 62.8,
-      "wind_speed": 1.116,
-      "wind_dir": "WNW",
+      "temperature": 31.92,
+      "humidity": 64.62,
+      "wind_speed": 1.08,
+      "wind_dir": "NNW",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -192,22 +192,16 @@
     "lat": 28.4595,
     "lon": 77.0266,
     "current": {
-      "time": "2026-09-24T18:30",
-      "temp": 29.6,
-      "humidity": 67,
+      "time": "2026-09-24T19:00",
+      "temp": 29,
+      "humidity": 69,
       "precip": 0,
-      "pressure": 1005,
-      "wind_speed": 8.2,
-      "wind_dir": 139,
+      "pressure": 1005.6,
+      "wind_speed": 10.3,
+      "wind_dir": 123,
       "code": 0
     },
     "hourly": [
-      {
-        "t": "18:00",
-        "temp": 29.6,
-        "pop": 0,
-        "code": 0
-      },
       {
         "t": "19:00",
         "temp": 28.6,
@@ -241,6 +235,12 @@
       {
         "t": "00:00",
         "temp": 25.9,
+        "pop": 0,
+        "code": 0
+      },
+      {
+        "t": "01:00",
+        "temp": 25.5,
         "pop": 0,
         "code": 0
       }
@@ -339,8 +339,8 @@
           "since": "2026-09-24T12:43:50.737Z"
         },
         "humidity": {
-          "state": "normal",
-          "since": "2026-09-24T06:43:08.317Z"
+          "state": "humid",
+          "since": "2026-09-24T13:41:44.305Z"
         }
       },
       "sector-48": {
@@ -533,22 +533,22 @@
   },
   "traffic": {
     "forward": {
-      "duration_s": 3998,
+      "duration_s": 4124,
       "static_duration_s": 2474,
       "distance_m": 12585,
-      "updated_at": "2026-09-24T18:39:40+05:30"
+      "updated_at": "2026-09-24T19:11:44+05:30"
     },
     "return-subhash": {
-      "duration_s": 4036,
-      "static_duration_s": 2470,
-      "distance_m": 17293,
-      "updated_at": "2026-09-24T18:39:40+05:30"
+      "duration_s": 3791,
+      "static_duration_s": 2126,
+      "distance_m": 16549,
+      "updated_at": "2026-09-24T19:11:44+05:30"
     },
     "return-ext": {
-      "duration_s": 5574,
-      "static_duration_s": 3314,
-      "distance_m": 19527,
-      "updated_at": "2026-09-24T18:39:40+05:30"
+      "duration_s": 5326,
+      "static_duration_s": 3540,
+      "distance_m": 19967,
+      "updated_at": "2026-09-24T19:11:44+05:30"
     }
   },
   "departurePlanToday": {
@@ -647,11 +647,11 @@
   },
   "gmapsUsage": {
     "month": "2026-09",
-    "calls": 1755,
+    "calls": 1758,
     "budget": 4500
   },
   "tomorrowRadar": {
-    "time": "2026-09-24T13:09:39.759Z",
+    "time": "2026-09-24T13:41:44.306Z",
     "zoom": 6,
     "tiles": [
       {
@@ -665,7 +665,7 @@
     ],
     "fields": {
       "precipitationIntensity": true,
-      "cloudCover": true
+      "cloudCover": false
     }
   },
   "golf": null
