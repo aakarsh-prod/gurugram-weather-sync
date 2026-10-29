@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T20:44:51.231Z",
+  "generatedAt": "2026-10-29T00:34:25.116Z",
   "historyStart": "2026-09-04T14:22:11.943638Z",
   "weekday": "Thursday",
   "stations": [
@@ -12,14 +12,14 @@
         "return-subhash",
         "return-ext"
       ],
-      "temperature": 18.2,
-      "humidity": 82.3,
-      "wind_speed": 0.108,
+      "temperature": 18.64,
+      "humidity": 80.86,
+      "wind_speed": 1.9080000000000001,
       "wind_dir": "NNE",
       "rain_intensity": 0,
       "rain_accumulation": 0,
-      "pm10": 1,
-      "pm25": 1,
+      "pm10": 2,
+      "pm25": 2,
       "status": "ok"
     },
     {
@@ -30,12 +30,12 @@
         "forward",
         "return-subhash"
       ],
-      "temperature": 23.32,
-      "humidity": 70.11,
-      "wind_speed": 2.124,
+      "temperature": 22.54,
+      "humidity": 76.73,
+      "wind_speed": 0.216,
       "wind_dir": "SW",
-      "rain_intensity": 0,
-      "rain_accumulation": 0,
+      "rain_intensity": 0.2,
+      "rain_accumulation": 0.2,
       "pm10": null,
       "pm25": null,
       "status": "ok"
@@ -49,10 +49,10 @@
         "return-subhash",
         "return-ext"
       ],
-      "temperature": 21.67,
-      "humidity": 74.8,
-      "wind_speed": 0,
-      "wind_dir": "SSW",
+      "temperature": 21.4,
+      "humidity": 76.11,
+      "wind_speed": 0.25200000000000006,
+      "wind_dir": "W",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -67,10 +67,10 @@
         "forward",
         "return-ext"
       ],
-      "temperature": 23.45,
-      "humidity": 70.91,
-      "wind_speed": 0.5040000000000001,
-      "wind_dir": "E",
+      "temperature": 22.34,
+      "humidity": 75.02,
+      "wind_speed": 0.54,
+      "wind_dir": "SSE",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -84,10 +84,10 @@
       "routes": [
         "return-ext"
       ],
-      "temperature": 19.23,
-      "humidity": 78.67,
-      "wind_speed": 6.444,
-      "wind_dir": "N",
+      "temperature": 19.42,
+      "humidity": 82.36,
+      "wind_speed": 2.8800000000000003,
+      "wind_dir": "NNW",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -102,10 +102,10 @@
         "forward",
         "return-ext"
       ],
-      "temperature": 21.67,
-      "humidity": 74.8,
-      "wind_speed": 0,
-      "wind_dir": "SSW",
+      "temperature": 21.4,
+      "humidity": 76.11,
+      "wind_speed": 0.25200000000000006,
+      "wind_dir": "W",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -117,10 +117,10 @@
       "name": "Sector 15, Gurugram",
       "tag": "Part II",
       "routes": [],
-      "temperature": 23.32,
-      "humidity": 73.31,
-      "wind_speed": 1.9440000000000002,
-      "wind_dir": "S",
+      "temperature": 22.6,
+      "humidity": 75.22,
+      "wind_speed": 2.2680000000000002,
+      "wind_dir": "ENE",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -132,12 +132,12 @@
       "name": "Sector 52, Gurugram",
       "tag": "Nirvana Country",
       "routes": [],
-      "temperature": 23.42,
-      "humidity": 71.48,
-      "wind_speed": 0.468,
-      "wind_dir": "ESE",
+      "temperature": 21.17,
+      "humidity": 82.69,
+      "wind_speed": 1.764,
+      "wind_dir": "WSW",
       "rain_intensity": 0,
-      "rain_accumulation": 0,
+      "rain_accumulation": 0.8,
       "pm10": null,
       "pm25": null,
       "status": "ok"
@@ -147,10 +147,10 @@
       "name": "Sector 10, Gurugram",
       "tag": "Old Gurugram",
       "routes": [],
-      "temperature": 23.57,
-      "humidity": 61.53,
-      "wind_speed": 0.396,
-      "wind_dir": "WNW",
+      "temperature": 21.52,
+      "humidity": 65.85,
+      "wind_speed": 1.1880000000000002,
+      "wind_dir": "NNW",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -177,10 +177,10 @@
       "name": "Sector 47, Gurugram",
       "tag": "Sohna Road",
       "routes": [],
-      "temperature": 23.05,
-      "humidity": 71.26,
-      "wind_speed": 0.108,
-      "wind_dir": "ESE",
+      "temperature": 22.34,
+      "humidity": 79.12,
+      "wind_speed": 0.432,
+      "wind_dir": "N",
       "rain_intensity": 0,
       "rain_accumulation": 0,
       "pm10": null,
@@ -192,57 +192,57 @@
     "lat": 28.4595,
     "lon": 77.0266,
     "current": {
-      "time": "2026-10-29T02:00",
-      "temp": 21.3,
+      "time": "2026-10-29T06:00",
+      "temp": 21.1,
       "humidity": 68,
       "precip": 0,
-      "pressure": 1013.8,
-      "wind_speed": 2.7,
-      "wind_dir": 337,
+      "pressure": 1014.8,
+      "wind_speed": 9.9,
+      "wind_dir": 91,
       "code": 3
     },
     "hourly": [
       {
-        "t": "02:00",
-        "temp": 21.3,
-        "pop": 0,
-        "code": 3
-      },
-      {
-        "t": "03:00",
-        "temp": 20.5,
-        "pop": 0,
-        "code": 3
-      },
-      {
-        "t": "04:00",
-        "temp": 20.4,
-        "pop": 0,
-        "code": 3
-      },
-      {
-        "t": "05:00",
-        "temp": 21.2,
-        "pop": 0,
-        "code": 3
-      },
-      {
         "t": "06:00",
         "temp": 20.9,
-        "pop": 3,
+        "pop": 27,
         "code": 3
       },
       {
         "t": "07:00",
         "temp": 20.4,
-        "pop": 6,
+        "pop": 29,
         "code": 51
       },
       {
         "t": "08:00",
         "temp": 21.6,
-        "pop": 10,
+        "pop": 33,
         "code": 51
+      },
+      {
+        "t": "09:00",
+        "temp": 23,
+        "pop": 40,
+        "code": 53
+      },
+      {
+        "t": "10:00",
+        "temp": 24.8,
+        "pop": 48,
+        "code": 51
+      },
+      {
+        "t": "11:00",
+        "temp": 25.2,
+        "pop": 55,
+        "code": 51
+      },
+      {
+        "t": "12:00",
+        "temp": 24.7,
+        "pop": 59,
+        "code": 55
       }
     ],
     "daily": [
@@ -262,7 +262,7 @@
         "tmax": 28.3,
         "tmin": 19.2,
         "precip_sum": 0,
-        "pop_max": 44
+        "pop_max": 30
       },
       {
         "date": "2026-10-31",
@@ -271,18 +271,18 @@
         "tmax": 29.8,
         "tmin": 19.8,
         "precip_sum": 0,
-        "pop_max": 8
+        "pop_max": 11
       }
     ]
   },
   "conditions": {
     "city": {
       "rain": {
-        "intensity_state": "dry",
-        "intensity_since": "2026-10-17T05:16:53.125Z",
-        "spell": "dry",
-        "spell_since": "2026-10-17T05:16:53.125Z",
-        "pattern": null,
+        "intensity_state": "light",
+        "intensity_since": "2026-10-29T00:34:24.687Z",
+        "spell": "wet",
+        "spell_since": "2026-10-29T00:34:24.687Z",
+        "pattern": "continuous",
         "toggles": 0
       },
       "wind": {
@@ -323,11 +323,11 @@
       },
       "sector-43": {
         "rain": {
-          "intensity_state": "dry",
-          "intensity_since": "2026-10-12T02:33:18.948Z",
-          "spell": "dry",
-          "spell_since": "2026-10-12T02:33:18.948Z",
-          "pattern": null,
+          "intensity_state": "light",
+          "intensity_since": "2026-10-29T00:34:24.687Z",
+          "spell": "wet",
+          "spell_since": "2026-10-29T00:34:24.687Z",
+          "pattern": "continuous",
           "toggles": 0
         },
         "wind": {
@@ -405,8 +405,8 @@
           "since": "2026-10-28T15:41:37.155Z"
         },
         "humidity": {
-          "state": "humid",
-          "since": "2026-10-28T15:41:37.155Z"
+          "state": "very-humid",
+          "since": "2026-10-29T00:34:24.687Z"
         }
       },
       "sector-50": {
@@ -471,8 +471,8 @@
           "since": "2026-10-28T15:41:37.155Z"
         },
         "humidity": {
-          "state": "humid",
-          "since": "2026-10-28T15:41:37.155Z"
+          "state": "very-humid",
+          "since": "2026-10-29T00:34:24.687Z"
         }
       },
       "sector-10": {
@@ -619,7 +619,7 @@
     "budget": 4500
   },
   "tomorrowRadar": {
-    "time": "2026-10-28T20:44:50.514Z",
+    "time": "2026-10-29T00:34:24.688Z",
     "zoom": 6,
     "tiles": [
       {
